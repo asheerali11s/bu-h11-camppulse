@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { CampusEvent } from '@/types';
-import { downloadEventICS, getGoogleCalendarLink } from '@/utils/calendar';
+import { downloadEventICS } from '@/utils/calendar';
 import { useApp } from '@/context/AppContext';
 import {
   Calendar,
@@ -11,10 +11,9 @@ import {
   Bookmark,
   Users,
   Download,
-  Share2,
-  ExternalLink,
   Flame,
   CheckCircle,
+  Building,
 } from 'lucide-react';
 
 interface EventCardProps {
@@ -38,18 +37,6 @@ export const EventCard: React.FC<EventCardProps> = ({
     (startTime.getTime() - now.getTime() > 0 &&
       startTime.getTime() - now.getTime() <= 2 * 60 * 60 * 1000);
 
-  const categoryStyles: Record<string, { bg: string; text: string; border: string }> = {
-    Tech: { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/30' },
-    Sports: { bg: 'bg-orange-500/10', text: 'text-orange-400', border: 'border-orange-500/30' },
-    Drama: { bg: 'bg-purple-500/10', text: 'text-purple-400', border: 'border-purple-500/30' },
-    'Free Food': { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/30' },
-    Workshops: { bg: 'bg-pink-500/10', text: 'text-pink-400', border: 'border-pink-500/30' },
-    Music: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/30' },
-    Academic: { bg: 'bg-indigo-500/10', text: 'text-indigo-400', border: 'border-indigo-500/30' },
-  };
-
-  const currentCat = categoryStyles[event.category] || categoryStyles.Tech;
-
   const formattedDate = startTime.toLocaleDateString('en-US', {
     weekday: 'short',
     month: 'short',
@@ -66,25 +53,23 @@ export const EventCard: React.FC<EventCardProps> = ({
 
   return (
     <div
-      className={`group relative rounded-2xl bg-slate-900 border transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-1 flex flex-col justify-between overflow-hidden ${
+      className={`group relative rounded-3xl bg-navy-900 border transition-all duration-300 hover:shadow-2xl hover:border-gold-500/40 hover:-translate-y-1 flex flex-col justify-between overflow-hidden ${
         isHappeningNow
-          ? 'border-emerald-500/50 ring-1 ring-emerald-500/30 shadow-emerald-900/20'
-          : 'border-slate-800 hover:border-slate-700'
+          ? 'border-gold-400/60 ring-1 ring-gold-400/40 shadow-gold'
+          : 'border-navy-750'
       }`}
     >
       {/* Top Banner Accents */}
-      <div className="p-5 pb-3">
+      <div className="p-6 pb-4">
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center space-x-2">
-            <span
-              className={`px-2.5 py-1 rounded-md text-xs font-bold border uppercase tracking-wider ${currentCat.bg} ${currentCat.text} ${currentCat.border}`}
-            >
+            <span className="px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider bg-navy-950 text-gold-300 border border-gold-500/30">
               {event.category}
             </span>
 
             {isHappeningNow && (
-              <span className="flex items-center space-x-1 px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse">
-                <Flame className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-gold-500/20 text-gold-300 border border-gold-500/40 animate-pulse">
+                <Flame className="w-3.5 h-3.5 text-gold-400" />
                 <span>HAPPENING NOW</span>
               </span>
             )}
@@ -92,39 +77,39 @@ export const EventCard: React.FC<EventCardProps> = ({
 
           <button
             onClick={() => toggleBookmark(event.id)}
-            className={`p-1.5 rounded-lg border transition-colors ${
+            className={`p-1.5 rounded-xl border transition-colors ${
               event.is_bookmarked
-                ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
-                : 'text-slate-400 hover:text-white border-transparent hover:bg-slate-800'
+                ? 'bg-gold-500/20 text-gold-400 border-gold-500/40'
+                : 'text-slate-400 hover:text-white border-transparent hover:bg-navy-800'
             }`}
             title={event.is_bookmarked ? 'Saved to bookmarks' : 'Bookmark event'}
           >
-            <Bookmark className={`w-4 h-4 ${event.is_bookmarked ? 'fill-amber-400' : ''}`} />
+            <Bookmark className={`w-4 h-4 ${event.is_bookmarked ? 'fill-gold-400 text-gold-400' : ''}`} />
           </button>
         </div>
 
         {/* Title */}
-        <h3 className="text-lg font-bold text-slate-100 group-hover:text-indigo-300 transition-colors line-clamp-1 mb-1.5">
+        <h3 className="text-lg font-bold text-white group-hover:text-gold-300 transition-colors line-clamp-1 mb-1.5">
           {event.title}
         </h3>
 
         {/* Society Header */}
         <button
           onClick={() => onOpenSocietyModal && event.society_id && onOpenSocietyModal(event.society_id)}
-          className="flex items-center space-x-2 text-xs text-slate-400 hover:text-indigo-400 transition-colors mb-3 group/soc"
+          className="flex items-center space-x-2 text-xs text-slate-300 hover:text-gold-300 transition-colors mb-3 group/soc"
         >
           {event.society?.logo_url && (
             <img
               src={event.society.logo_url}
               alt=""
-              className="w-4 h-4 rounded-full object-cover border border-slate-700"
+              className="w-4 h-4 rounded-full object-cover border border-gold-500/30"
             />
           )}
-          <span className="font-medium underline-offset-2 group-hover/soc:underline">
+          <span className="font-semibold underline-offset-2 group-hover/soc:underline">
             {event.society?.name || 'Campus Society'}
           </span>
           {event.society?.is_recruiting && (
-            <span className="bg-emerald-500/20 text-emerald-400 text-[10px] px-1.5 py-0.2 rounded font-semibold border border-emerald-500/30">
+            <span className="bg-emerald-500/10 text-emerald-300 text-[9px] px-1.5 py-0.2 rounded font-bold border border-emerald-500/30">
               Recruiting!
             </span>
           )}
@@ -136,25 +121,25 @@ export const EventCard: React.FC<EventCardProps> = ({
         </p>
 
         {/* Location & Time specs */}
-        <div className="space-y-1.5 text-xs text-slate-300 pt-3 border-t border-slate-800/80">
-          <div className="flex items-center space-x-2 text-slate-300">
-            <Calendar className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+        <div className="space-y-1.5 text-xs text-slate-300 pt-3 border-t border-navy-800">
+          <div className="flex items-center space-x-2">
+            <Calendar className="w-3.5 h-3.5 text-gold-400 shrink-0" />
             <span className="font-semibold text-slate-200">{formattedDate}</span>
-            <span className="text-slate-500">•</span>
-            <Clock className="w-3.5 h-3.5 text-indigo-400 shrink-0 ml-1" />
-            <span className="text-slate-400">{formattedTime}</span>
+            <span className="text-slate-600">•</span>
+            <Clock className="w-3.5 h-3.5 text-gold-400 shrink-0 ml-1" />
+            <span className="text-slate-400 font-mono text-[11px]">{formattedTime}</span>
           </div>
 
-          <div className="flex items-center justify-between text-slate-400">
+          <div className="flex items-center justify-between text-slate-300">
             <div className="flex items-center space-x-2 truncate">
-              <MapPin className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+              <MapPin className="w-3.5 h-3.5 text-gold-400 shrink-0" />
               <span className="truncate">{event.location_name}</span>
             </div>
 
             {onFocusOnMap && (
               <button
                 onClick={() => onFocusOnMap(event)}
-                className="text-[11px] text-indigo-400 hover:text-indigo-300 font-medium underline shrink-0 ml-2"
+                className="text-[11px] text-gold-400 hover:text-gold-300 font-bold underline shrink-0 ml-2"
               >
                 Pin on Map
               </button>
@@ -164,12 +149,12 @@ export const EventCard: React.FC<EventCardProps> = ({
       </div>
 
       {/* Card Action Footer */}
-      <div className="px-5 py-3.5 bg-slate-950/60 border-t border-slate-800/80 flex items-center justify-between gap-2">
+      <div className="px-6 py-3.5 bg-navy-950/70 border-t border-navy-800 flex items-center justify-between gap-2">
         <div className="flex items-center space-x-1.5 text-xs text-slate-400">
           <Users className="w-3.5 h-3.5 text-slate-500" />
           <span>
             <strong className="text-slate-200 font-semibold">{event.attendee_count || 0}</strong>
-            {event.capacity ? ` / ${event.capacity}` : ''} attending
+            {event.capacity ? ` / ${event.capacity}` : ''} RSVPs
           </span>
         </div>
 
@@ -177,16 +162,16 @@ export const EventCard: React.FC<EventCardProps> = ({
           {/* Quick RSVP Button */}
           <button
             onClick={() => rsvpEvent(event.id)}
-            className="px-2.5 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-semibold transition-colors flex items-center space-x-1"
+            className="px-3 py-1.5 rounded-xl bg-gold-500 hover:bg-gold-400 text-navy-950 font-black text-xs uppercase tracking-wider transition-all flex items-center space-x-1 shadow-gold"
           >
-            <CheckCircle className="w-3 h-3 text-indigo-400" />
+            <CheckCircle className="w-3.5 h-3.5" />
             <span>RSVP</span>
           </button>
 
           {/* One-click .ics Calendar Export */}
           <button
             onClick={() => downloadEventICS(event)}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium transition-colors flex items-center"
+            className="p-2 rounded-xl bg-navy-900 hover:bg-navy-850 text-gold-400 border border-navy-700 hover:border-gold-500/40 text-xs font-medium transition-colors"
             title="Download .ics file for Apple, Google, or Outlook calendar sync"
           >
             <Download className="w-3.5 h-3.5" />
