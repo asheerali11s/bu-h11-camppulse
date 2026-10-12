@@ -7,285 +7,179 @@ import {
   SystemAuditLog,
   ChatChannel,
   ChatMessage,
+  CampusFloor,
 } from '@/types';
+
+// ==============================================================================
+// BU (Bahria University H-11 CAMPUS) ISLAMABAD DIRECTORY & LAB ARCHITECTURE
+// Location: Plot 83, Sector H-11/4, Islamabad (Lat: 33.6582, Lng: 73.0175)
+// ==============================================================================
+
+export const BU_H11_COORDINATES = {
+  lat: 33.6582,
+  lng: 73.0175,
+  name: 'Bahria University H-11 Campus, Islamabad',
+  address: 'Plot 83, Sector H-11/4, Islamabad, Pakistan',
+};
+
+// Multi-Floor and Lab Model for BU H-11 Campus
+export interface H11FloorPlan {
+  floor: CampusFloor;
+  label: string;
+  wings: string;
+  facilities: { name: string; type: 'lab' | 'hall' | 'sports' | 'general'; capacity: number }[];
+}
+
+export const BU_H11_FLOORS: H11FloorPlan[] = [
+  {
+    floor: 'Ground',
+    label: 'Ground Level & Central Quad',
+    wings: 'Main Entrance, Administration & Auditoriums',
+    facilities: [
+      { name: 'Sir Syed Multi-Purpose Hall & Auditorium', type: 'hall', capacity: 550 },
+      { name: 'Central Student Cafeteria & Courtyard', type: 'general', capacity: 300 },
+      { name: 'Admissions & Student Affairs Directorate', type: 'general', capacity: 80 },
+      { name: 'Central Sports Complex (Futsal & Basketball)', type: 'sports', capacity: 400 },
+    ],
+  },
+  {
+    floor: '1st',
+    label: '1st Floor • Computing & Software Engineering',
+    wings: 'CS & SE Departmental Labs & Lecture Theatres',
+    facilities: [
+      { name: 'High-Tech AI & Data Science Lab', type: 'lab', capacity: 60 },
+      { name: 'Software Engineering Development Lab 1', type: 'lab', capacity: 50 },
+      { name: 'General Purpose Computer Programming Lab 2', type: 'lab', capacity: 55 },
+      { name: 'Final Year Project (FYP) Innovation Bay', type: 'lab', capacity: 40 },
+      { name: 'CS Lecture Theatres (LT-101 to LT-105)', type: 'hall', capacity: 120 },
+    ],
+  },
+  {
+    floor: '2nd',
+    label: '2nd Floor • Electrical Engineering & Robotics',
+    wings: 'Hardware, Embedded Systems & Robotics',
+    facilities: [
+      { name: 'Prototyping & Combat Robotics Arena Lab', type: 'lab', capacity: 50 },
+      { name: 'Embedded System Design & Microprocessor Lab', type: 'lab', capacity: 45 },
+      { name: 'Analog & Digital Electronic Circuits Lab', type: 'lab', capacity: 40 },
+      { name: 'EE Seminar Hall B', type: 'hall', capacity: 150 },
+    ],
+  },
+  {
+    floor: '3rd',
+    label: '3rd Floor • Earth Sciences, Media & Executive',
+    wings: 'Environmental Science Labs, Studios & Faculty Suites',
+    facilities: [
+      { name: 'Environmental Science Lab (XRD & Spectrophotometry)', type: 'lab', capacity: 40 },
+      { name: 'Digital Media Production & Broadcast Studio', type: 'lab', capacity: 35 },
+      { name: 'Department Chairpersons & Faculty Lounges', type: 'general', capacity: 30 },
+      { name: 'Executive Conference Boardroom', type: 'hall', capacity: 60 },
+    ],
+  },
+  {
+    floor: 'Outdoor',
+    label: 'Campus Outdoor Grounds & Facilities',
+    wings: 'Plot 83 Exterior Spaces',
+    facilities: [
+      { name: 'Main Campus Football & Cricket Ground', type: 'sports', capacity: 800 },
+      { name: 'Outdoor Amphitheater Stage', type: 'hall', capacity: 400 },
+      { name: 'Girls Hostel Lawn & Recreational Court', type: 'general', capacity: 150 },
+    ],
+  },
+];
 
 export const INITIAL_DEPARTMENTS: Department[] = [
   {
-    id: 'dept-cs',
-    name: 'Computer Science & Software Engineering',
+    id: 'dept-cs-h11',
+    name: 'Department of Computer Science & Software Engineering',
     code: 'CS & SE',
-    hod_name: 'Dr. Farooq Azam',
-    venues: ['CS Lab 1', 'CS Lab 2', 'Sir Syed Auditorium', 'CS Courtyard'],
+    hod_name: 'Department Head',
+    venues: [
+      'High-Tech AI & Data Science Lab (1st Floor)',
+      'Software Engineering Lab 1 (1st Floor)',
+      'General Purpose Computer Lab 2 (1st Floor)',
+      'Sir Syed Multi-Purpose Auditorium (Ground Floor)',
+    ],
   },
   {
-    id: 'dept-ee',
-    name: 'Electrical & Computer Engineering',
-    code: 'ECE',
-    hod_name: 'Dr. Nadia Kausar',
-    venues: ['Circuits Studio', 'Robotics Arena', 'Seminar Hall B'],
+    id: 'dept-ee-h11',
+    name: 'Department of Electrical Engineering & Robotics',
+    code: 'EE & Robotics',
+    hod_name: 'Department Head',
+    venues: [
+      'Prototyping & Combat Robotics Arena (2nd Floor)',
+      'Embedded System Design Lab (2nd Floor)',
+      'Analog Electronics Lab (2nd Floor)',
+      'EE Seminar Hall B (2nd Floor)',
+    ],
   },
   {
-    id: 'dept-ms',
-    name: 'Management & Business Studies',
-    code: 'BBS',
-    hod_name: 'Prof. Tariq Hashmi',
-    venues: ['Executive Hall', 'Auditorium A', 'Incubation Center'],
+    id: 'dept-ees-h11',
+    name: 'Department of Earth & Environmental Sciences',
+    code: 'E&ES',
+    hod_name: 'Department Head',
+    venues: [
+      'Environmental Science Research Lab (3rd Floor)',
+      'Sample Analysis & XRD Facility (3rd Floor)',
+    ],
   },
   {
-    id: 'dept-media',
-    name: 'Media & Communication Studies',
-    code: 'MCS',
-    hod_name: 'Dr. Shaheen Akhtar',
-    venues: ['Media Production Studio', 'Open Amphitheater'],
+    id: 'dept-media-h11',
+    name: 'Department of Media & Management Sciences',
+    code: 'Media & BBS',
+    hod_name: 'Department Head',
+    venues: [
+      'Digital Media Production Studio (3rd Floor)',
+      'Outdoor Amphitheater (Ground Floor)',
+      'Executive Conference Boardroom (3rd Floor)',
+    ],
   },
 ];
 
-export const INITIAL_SOCIETIES: Society[] = [
-  {
-    id: 'soc-acm',
-    name: 'ACM Student Chapter',
-    code: 'ACM',
-    description: 'Bahria University chapter of the Association for Computing Machinery. Promoting software engineering, algorithms, and hackathons.',
-    logo_url: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=128&q=80',
-    is_recruiting: true,
-    department: 'Computer Science & Software Engineering',
-    lead_enrollment: '01-134201-015',
-    lead_name: 'Hamza Tariq (President)',
-    contact_email: 'acm.executive@bahria.edu.pk',
-    instagram_handle: '@acm_bahria',
-    member_count: 85,
-  },
-  {
-    id: 'soc-bds',
-    name: 'Bahria Dramatic Society (BDS)',
-    code: 'BDS',
-    description: 'The premier collegiate theatre and creative production guild of Bahria University.',
-    logo_url: 'https://images.unsplash.com/photo-1460723237483-7a6dc9d0b212?w=128&q=80',
-    is_recruiting: true,
-    department: 'Media & Communication Studies',
-    lead_enrollment: '02-134211-089',
-    lead_name: 'Zara Malik (Director)',
-    contact_email: 'drama@bahria.edu.pk',
-    instagram_handle: '@bds_theatre',
-    member_count: 62,
-  },
-  {
-    id: 'soc-gdsc',
-    name: 'Google Developer Student Club',
-    code: 'GDSC',
-    description: 'Campus developers building solutions for real-world problems using Google Cloud, Web, and AI technologies.',
-    logo_url: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=128&q=80',
-    is_recruiting: false,
-    department: 'Computer Science & Software Engineering',
-    lead_enrollment: '01-134211-094',
-    lead_name: 'Bilal Khan (Lead)',
-    contact_email: 'gdsc@bahria.edu.pk',
-    instagram_handle: '@gdsc_bu',
-    member_count: 110,
-  },
-  {
-    id: 'soc-sports',
-    name: 'Bahria Athletic & Sports Council',
-    code: 'BASC',
-    description: 'Organizing inter-departmental futsal tournaments, cricket cups, badminton championships, and hiking treks.',
-    logo_url: 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=128&q=80',
-    is_recruiting: true,
-    department: 'Management & Business Studies',
-    lead_enrollment: '03-134212-031',
-    lead_name: 'Saad Farooq (Captain)',
-    contact_email: 'sports@bahria.edu.pk',
-    instagram_handle: '@bahria_sports',
-    member_count: 140,
-  },
-];
+// CLEAN SLATE: All pre-added placeholder users and dummy societies removed as requested!
+export const MOCK_USERS: UserProfile[] = [];
 
-// Clean slate: ZERO random AI filler events!
-// Real events are created through the Society Admin workspace and approved by the HOD.
+export const INITIAL_SOCIETIES: Society[] = [];
+
 export const INITIAL_EVENTS: CampusEvent[] = [];
 
 export const INITIAL_ANNOUNCEMENTS: FlashAnnouncement[] = [
   {
-    id: 'ann-1',
-    message: 'Campus notice: Semester registration and society recruitment drives open this week.',
+    id: 'ann-h11-1',
+    message: 'Welcome to BU (Bahria University H-11 Campus) Portal. Verified student registration is active.',
     category: 'highlight',
-    society_name: 'Campus Administration',
+    society_name: 'H-11 Campus Administration',
     created_at: new Date().toISOString(),
     active: true,
   },
 ];
 
-// Verified Campus User Database with Enrollment IDs
-export const MOCK_USERS: UserProfile[] = [
-  {
-    id: 'usr-student-1',
-    enrollment_id: '01-134221-042',
-    email: 'ammar.student@bahria.edu.pk',
-    full_name: 'Ammar Ahmed',
-    department: 'Computer Science',
-    role: 'student',
-    avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80',
-  },
-  {
-    id: 'usr-society-1',
-    enrollment_id: '01-134201-015',
-    email: 'hamza.acm@bahria.edu.pk',
-    full_name: 'Hamza Tariq',
-    department: 'Software Engineering',
-    role: 'society_admin',
-    society_id: 'soc-acm',
-    society_name: 'ACM Student Chapter',
-    avatar_url: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&q=80',
-  },
-  {
-    id: 'usr-hod-1',
-    enrollment_id: '00-HOD-CS-001',
-    email: 'hod.cs@bahria.edu.pk',
-    full_name: 'Dr. Farooq Azam',
-    department: 'Computer Science',
-    role: 'hod',
-    avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=80',
-  },
-  {
-    id: 'usr-dev-1',
-    enrollment_id: '00-SYS-DEV-000',
-    email: 'sysadmin@bahria.edu.pk',
-    full_name: 'Bahria IT Operations',
-    department: 'Central IT Services',
-    role: 'developer',
-    avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80',
-  },
-  {
-    id: 'usr-student-2',
-    enrollment_id: '02-134211-089',
-    email: 'zara.drama@bahria.edu.pk',
-    full_name: 'Zara Malik',
-    department: 'Media Studies',
-    role: 'society_admin',
-    society_id: 'soc-bds',
-    society_name: 'Bahria Dramatic Society (BDS)',
-    avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80',
-  },
-];
-
-// Initial WhatsApp-Style Group Channels
 export const INITIAL_CHANNELS: ChatChannel[] = [
   {
-    id: 'chan-general',
-    name: 'Campus Quad (Verified Students)',
+    id: 'chan-h11-general',
+    name: 'BU H-11 Campus Quad',
     type: 'general',
-    description: 'Official campus-wide student discussion forum for events, queries, and notices.',
+    description: 'Official H-11 Campus-wide discussion channel for all verified students & societies.',
     is_private: false,
-    member_enrollments: [
-      '01-134221-042',
-      '01-134201-015',
-      '00-HOD-CS-001',
-      '00-SYS-DEV-000',
-      '02-134211-089',
-    ],
-    created_by_enrollment: '00-SYS-DEV-000',
-    avatar_url: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=100&q=80',
-    last_message: 'Welcome all students to the verified CampPulse campus network!',
-    last_message_time: new Date(Date.now() - 3600 * 1000).toISOString(),
-    unread_count: 0,
-  },
-  {
-    id: 'chan-acm-core',
-    name: 'ACM Executive Core ⚡',
-    type: 'society',
-    society_id: 'soc-acm',
-    society_name: 'ACM Student Chapter',
-    description: 'Private coordination group for ACM executive council members & event organizers.',
-    is_private: true,
-    member_enrollments: ['01-134201-015', '01-134221-042'],
-    created_by_enrollment: '01-134201-015',
-    avatar_url: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=100&q=80',
-    last_message: 'We are preparing the venue booking request for the upcoming hackathon.',
-    last_message_time: new Date(Date.now() - 1800 * 1000).toISOString(),
-    unread_count: 1,
-  },
-  {
-    id: 'chan-drama-cast',
-    name: 'BDS Production & Rehearsal Squad 🎭',
-    type: 'society',
-    society_id: 'soc-bds',
-    society_name: 'Bahria Dramatic Society (BDS)',
-    description: 'Private cast and stage management coordination for annual plays.',
-    is_private: true,
-    member_enrollments: ['02-134211-089'],
-    created_by_enrollment: '02-134211-089',
-    avatar_url: 'https://images.unsplash.com/photo-1460723237483-7a6dc9d0b212?w=100&q=80',
-    last_message: 'Auditions schedule has been confirmed for the main auditorium.',
-    last_message_time: new Date(Date.now() - 7200 * 1000).toISOString(),
+    member_enrollments: [],
+    created_by_enrollment: 'CAMPUS-ADMIN',
+    avatar_url: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=100&q=80',
+    last_message: 'Welcome to the Bahria University H-11 Campus verified network.',
+    last_message_time: new Date().toISOString(),
     unread_count: 0,
   },
 ];
 
-// Initial Messages
-export const INITIAL_MESSAGES: ChatMessage[] = [
-  {
-    id: 'msg-1',
-    channel_id: 'chan-general',
-    sender_id: 'usr-dev-1',
-    sender_name: 'Bahria IT Operations',
-    sender_enrollment: '00-SYS-DEV-000',
-    sender_dept: 'Central IT Services',
-    sender_role: 'developer',
-    content: 'Welcome to CampPulse! Real-time campus radar and verified society hubs are now live.',
-    created_at: new Date(Date.now() - 3600 * 1000).toISOString(),
-    is_system: true,
-  },
-  {
-    id: 'msg-2',
-    channel_id: 'chan-general',
-    sender_id: 'usr-society-1',
-    sender_name: 'Hamza Tariq',
-    sender_enrollment: '01-134201-015',
-    sender_dept: 'Software Engineering',
-    sender_role: 'society_admin',
-    content: 'Hello everyone! ACM recruitment is open for second-year and third-year students. You can join our private society room via invitation!',
-    created_at: new Date(Date.now() - 2500 * 1000).toISOString(),
-  },
-  {
-    id: 'msg-3',
-    channel_id: 'chan-general',
-    sender_id: 'usr-student-1',
-    sender_name: 'Ammar Ahmed',
-    sender_enrollment: '01-134221-042',
-    sender_dept: 'Computer Science',
-    sender_role: 'student',
-    content: 'Looking forward to the upcoming coding workshop. When will venue dates be announced?',
-    created_at: new Date(Date.now() - 1900 * 1000).toISOString(),
-  },
-  {
-    id: 'msg-4',
-    channel_id: 'chan-acm-core',
-    sender_id: 'usr-society-1',
-    sender_name: 'Hamza Tariq',
-    sender_enrollment: '01-134201-015',
-    sender_dept: 'Software Engineering',
-    sender_role: 'society_admin',
-    content: 'Team, please verify the proposal for CS Lab 1 before we submit for Dr. Farooq’s HOD approval.',
-    created_at: new Date(Date.now() - 1200 * 1000).toISOString(),
-  },
-];
+export const INITIAL_MESSAGES: ChatMessage[] = [];
 
 export const INITIAL_AUDIT_LOGS: SystemAuditLog[] = [
   {
-    id: 'log-1',
-    user_email: 'sysadmin@bahria.edu.pk',
-    user_enrollment: '00-SYS-DEV-000',
-    action: 'SYSTEM_BOOT',
-    details: 'CampPulse initialized with Bahria University credentials, verified enrollment validation, and WhatsApp-style group chats.',
-    timestamp: new Date(Date.now() - 3600 * 1000).toISOString(),
-    severity: 'info',
-  },
-  {
-    id: 'log-2',
-    user_email: 'sysadmin@bahria.edu.pk',
-    user_enrollment: '00-SYS-DEV-000',
-    action: 'GITHUB_DATABASE_SYNC',
-    details: 'GitHub realtime database sync layer primed. Live state serialized as clean JSON schema.',
-    timestamp: new Date(Date.now() - 1800 * 1000).toISOString(),
+    id: 'log-boot-h11',
+    user_email: 'admin@bahria.edu.pk',
+    user_enrollment: 'BU-H11-ADMIN',
+    action: 'CAMPUS_INIT',
+    details: 'BU (Bahria University H-11 Campus) online network initialized. Clean database slate active.',
+    timestamp: new Date().toISOString(),
     severity: 'info',
   },
 ];

@@ -110,6 +110,18 @@ export default function ChatPage() {
     (c.society_name && c.society_name.toLowerCase().includes(searchChannel.toLowerCase()))
   );
 
+  if (!currentUser) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-20 text-center flex flex-col items-center justify-center">
+        <div className="w-14 h-14 rounded-2xl bg-navy-900 border border-gold-500/30 flex items-center justify-center mb-4">
+          <MessageSquare className="w-7 h-7 text-gold-400 animate-pulse" />
+        </div>
+        <h2 className="text-xl font-bold text-white mb-2">Authenticating BU H-11 Session...</h2>
+        <p className="text-slate-400 text-sm">Please verify your enrollment credentials to access verified society chats.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-6 h-[calc(100vh-5rem)] flex flex-col">
       {/* Top Breadcrumb & GitHub Real-Time Sync Status */}

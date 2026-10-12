@@ -4,7 +4,7 @@ import { useApp } from '@/context/AppContext';
 import { UserProfile, UserRole } from '@/types';
 
 export interface UseUserRoleReturn {
-  user: UserProfile;
+  user: UserProfile | null;
   role: UserRole;
   isDeveloper: boolean;
   isHod: boolean;

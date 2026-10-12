@@ -264,25 +264,35 @@ export const Navbar: React.FC = () => {
               </div>
 
               {/* User Profile Pill & Login Trigger */}
-              <button
-                onClick={() => setAuthModalOpen(true)}
-                className="flex items-center space-x-2.5 p-1.5 pr-3 rounded-xl bg-navy-900 border border-navy-700 hover:border-gold-500/40 transition-colors text-left group"
-                title="Click to view profile or sign in with another Enrollment ID"
-              >
-                <img
-                  src={currentUser.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=64&q=80'}
-                  alt=""
-                  className="w-8 h-8 rounded-full border border-gold-500/40 object-cover"
-                />
-                <div className="flex flex-col">
-                  <span className="text-xs font-bold text-slate-200 group-hover:text-gold-300 transition-colors truncate max-w-[110px]">
-                    {currentUser.full_name.split(' ')[0]}
-                  </span>
-                  <span className="text-[10px] text-gold-400 font-mono truncate max-w-[110px]">
-                    {currentUser.enrollment_id}
-                  </span>
-                </div>
-              </button>
+              {currentUser ? (
+                <button
+                  onClick={() => setAuthModalOpen(true)}
+                  className="flex items-center space-x-2.5 p-1.5 pr-3 rounded-xl bg-navy-900 border border-navy-700 hover:border-gold-500/40 transition-colors text-left group"
+                  title="Click to view profile or sign in with another Enrollment ID"
+                >
+                  <img
+                    src={currentUser.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=64&q=80'}
+                    alt=""
+                    className="w-8 h-8 rounded-full border border-gold-500/40 object-cover"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-slate-200 group-hover:text-gold-300 transition-colors truncate max-w-[110px]">
+                      {currentUser.full_name?.split(' ')[0] || 'Student'}
+                    </span>
+                    <span className="text-[10px] text-gold-400 font-mono truncate max-w-[110px]">
+                      {currentUser.enrollment_id}
+                    </span>
+                  </div>
+                </button>
+              ) : (
+                <button
+                  onClick={() => setAuthModalOpen(true)}
+                  className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-gold-500/20 border border-gold-500/50 text-gold-300 hover:bg-gold-500/30 text-xs font-bold transition-colors"
+                >
+                  <User className="w-3.5 h-3.5" />
+                  <span>Sign In</span>
+                </button>
+              )}
             </div>
 
             {/* Mobile menu button */}

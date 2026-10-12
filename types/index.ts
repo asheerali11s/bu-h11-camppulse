@@ -2,10 +2,10 @@ export type UserRole = 'developer' | 'hod' | 'society_admin' | 'student';
 
 export interface UserProfile {
   id: string;
-  enrollment_id: string; // e.g. "01-134211-042"
+  enrollment_id: string; // e.g. "01-134221-042"
   email: string;
   full_name: string;
-  department: string; // e.g. "Computer Science", "Software Engineering"
+  department: string; // e.g. "Computer Science & Software Engineering"
   role: UserRole;
   society_id?: string | null;
   society_name?: string | null;
@@ -27,6 +27,7 @@ export interface Society {
   contact_email?: string;
   instagram_handle?: string;
   member_count?: number;
+  created_at?: string;
 }
 
 export type EventCategory = 
@@ -38,12 +39,16 @@ export type EventCategory =
   | 'Music' 
   | 'Academic';
 
+export type CampusFloor = 'Ground' | '1st' | '2nd' | '3rd' | 'Outdoor';
+
 export interface CampusEvent {
   id: string;
   title: string;
   description: string;
   category: EventCategory;
   location_name: string;
+  floor: CampusFloor; // Ground, 1st (CS), 2nd (EE), 3rd (Research/Media), Outdoor
+  lab_name?: string;  // e.g. "AI & Data Science Lab", "Sir Syed Auditorium"
   latitude: number;
   longitude: number;
   start_time: string; // ISO string
@@ -71,7 +76,7 @@ export interface Department {
   id: string;
   name: string;
   code: string;
-  hod_name: string;
+  hod_name?: string;
   venues: string[];
 }
 
@@ -85,9 +90,6 @@ export interface SystemAuditLog {
   severity: 'info' | 'warning' | 'critical';
 }
 
-// ==========================================
-// WhatsApp-Style Society & Campus Chat Engine
-// ==========================================
 export type ChannelType = 'general' | 'society' | 'direct';
 
 export interface ChatChannel {
@@ -98,7 +100,7 @@ export interface ChatChannel {
   society_id?: string;
   society_name?: string;
   is_private: boolean;
-  member_enrollments: string[]; // List of enrollment IDs allowed/invited
+  member_enrollments: string[];
   created_by_enrollment: string;
   avatar_url?: string;
   last_message?: string;
@@ -119,7 +121,6 @@ export interface ChatMessage {
   is_system?: boolean;
 }
 
-// GitHub Real-Time Database Sync Engine
 export interface GitHubSyncConfig {
   owner: string;
   repo: string;

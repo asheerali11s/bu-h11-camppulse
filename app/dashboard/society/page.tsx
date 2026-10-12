@@ -4,7 +4,8 @@ import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useApp } from '@/context/AppContext';
-import { CampusEvent, EventCategory } from '@/types';
+import { CampusEvent, EventCategory, CampusFloor } from '@/types';
+import { BU_H11_FLOORS, BU_H11_COORDINATES } from '@/utils/mockData';
 import {
   Calendar,
   Plus,
@@ -21,6 +22,7 @@ import {
   MessageSquare,
   ShieldCheck,
   Building,
+  Layers,
 } from 'lucide-react';
 
 export default function SocietyDashboardPage() {
@@ -31,55 +33,63 @@ export default function SocietyDashboardPage() {
     societies,
     addEvent,
     deleteEvent,
+    createSociety,
     updateSociety,
     addAnnouncement,
   } = useApp();
 
-  // Active Society (either matched to user or first society)
-  const currentSociety = societies.find((s) => s.id === currentUser.society_id) || societies[0];
+  // Find or determine user's society
+  const currentSociety = societies.find((s) => s.lead_enrollment === currentUser?.enrollment_id) || societies[0];
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isFlashModalOpen, setIsFlashModalOpen] = useState(false);
-  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [isNewSocietyModalOpen, setIsNewSocietyModalOpen] = useState(false);
 
-  // Form states
-  const [profileName, setProfileName] = useState(currentSociety?.name || '');
-  const [profileBio, setProfileBio] = useState(currentSociety?.description || '');
-  const [profileLogo, setProfileLogo] = useState(currentSociety?.logo_url || '');
-  const [isRecruiting, setIsRecruiting] = useState(currentSociety?.is_recruiting ?? true);
+  // New Society form state
+  const [socName, setSocName] = useState('');
+  const [socCode, setSocCode] = useState('');
+  const [socDesc, setSocDesc] = useState('');
+  const [socDept, setSocDept] = useState(currentUser?.department || 'Department of Computer Science & Software Engineering');
 
+  // Event form state
   const [eventTitle, setEventTitle] = useState('');
   const [eventDescription, setEventDescription] = useState('');
   const [eventCategory, setEventCategory] = useState<EventCategory>('Tech');
-  const [eventVenue, setEventVenue] = useState('CS Lab 1');
-  const [eventLat, setEventLat] = useState(33.7182);
-  const [eventLng, setEventLng] = useState(73.0298);
+  const [eventFloor, setEventFloor] = useState<CampusFloor>('1st');
+  const [eventLab, setEventLab] = useState('High-Tech AI & Data Science Lab');
   const [eventStartDate, setEventStartDate] = useState('');
   const [eventStartTime, setEventStartTime] = useState('14:00');
   const [eventEndDate, setEventEndDate] = useState('');
   const [eventEndTime, setEventEndTime] = useState('17:00');
-  const [eventCapacity, setEventCapacity] = useState(120);
+  const [eventCapacity, setEventCapacity] = useState(60);
 
   const [flashMessage, setFlashMessage] = useState('');
   const [flashCategory, setFlashCategory] = useState<'urgent' | 'highlight' | 'reminder'>('urgent');
 
-  const venuePresets = [
-    { name: 'CS Lab 1 & Software Innovation Hall', lat: 33.7182, lng: 73.0298 },
-    { name: 'Sir Syed Main Auditorium', lat: 33.7175, lng: 73.0292 },
-    { name: 'CS Lawn & Cafeteria Courtyard', lat: 33.7185, lng: 73.0305 },
-    { name: 'Seminar Hall B (Engineering Wing)', lat: 33.7179, lng: 73.0289 },
-    { name: 'Central Sports Complex Arena', lat: 33.7192, lng: 73.0312 },
-    { name: 'Robotics & Automation Plaza', lat: 33.7188, lng: 73.0294 },
-    { name: 'Open Amphitheater Stage', lat: 33.7184, lng: 73.0301 },
-  ];
+  const selectedFloorFacilities = BU_H11_FLOORS.find((f) => f.floor === eventFloor)?.facilities || [];
 
   const myEvents = useMemo(() => {
-    return events.filter((e) => e.society_id === currentSociety?.id);
+    if (!currentSociety) return [];
+    return events.filter((e) => e.society_id === currentSociety.id);
   }, [events, currentSociety]);
+
+  const handleCreateSociety = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!socName.trim() || !socCode.trim()) return;
+
+    await createSociety({
+      name: socName.trim(),
+      code: socCode.trim(),
+      description: socDesc.trim() || 'Official student society of BU H-11 Campus.',
+      department: socDept,
+    });
+
+    setIsNewSocietyModalOpen(false);
+  };
 
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!eventTitle.trim() || !eventVenue.trim()) return;
+    if (!eventTitle.trim() || !currentSociety) return;
 
     const startDateTime = eventStartDate
       ? new Date(`${eventStartDate}T${eventStartTime}`).toISOString()
@@ -91,11 +101,13 @@ export default function SocietyDashboardPage() {
 
     await addEvent({
       title: eventTitle.trim(),
-      description: eventDescription || 'Official campus event organized by the society.',
+      description: eventDescription || 'Official BU H-11 campus event.',
       category: eventCategory,
-      location_name: eventVenue,
-      latitude: eventLat,
-      longitude: eventLng,
+      location_name: `${eventLab} (${eventFloor} Floor, H-11 Block)`,
+      floor: eventFloor,
+      lab_name: eventLab,
+      latitude: BU_H11_COORDINATES.lat,
+      longitude: BU_H11_COORDINATES.lng,
       start_time: startDateTime,
       end_time: endDateTime,
       society_id: currentSociety.id,
@@ -109,7 +121,7 @@ export default function SocietyDashboardPage() {
 
   const handleBroadcastFlash = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!flashMessage.trim()) return;
+    if (!flashMessage.trim() || !currentSociety) return;
 
     await addAnnouncement({
       message: flashMessage,
@@ -121,17 +133,6 @@ export default function SocietyDashboardPage() {
     setIsFlashModalOpen(false);
   };
 
-  const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await updateSociety(currentSociety.id, {
-      name: profileName,
-      description: profileBio,
-      logo_url: profileLogo,
-      is_recruiting: isRecruiting,
-    });
-    setIsEditProfileOpen(false);
-  };
-
   if (!isSocietyAdmin && !isDeveloper) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-20 text-center space-y-4">
@@ -140,8 +141,7 @@ export default function SocietyDashboardPage() {
         </div>
         <h2 className="text-2xl font-black text-white">Society Executive Privileges Required</h2>
         <p className="text-slate-400 text-xs max-w-md mx-auto">
-          You are currently viewing in <strong>{role.toUpperCase()}</strong> mode. To manage society
-          affairs, draft event proposals, and broadcast campus flashes, switch your active mode:
+          You are currently viewing in <strong>{role.toUpperCase()}</strong> mode. To manage BU H-11 societies and draft event proposals, switch your active mode:
         </p>
         <button
           onClick={() => switchRole('society_admin')}
@@ -155,131 +155,103 @@ export default function SocietyDashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      {/* Top Banner (Navy & Gold) */}
+      {/* Top Banner */}
       <div className="relative rounded-3xl bg-navy-900 border border-gold-500/30 p-6 sm:p-8 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="flex items-center space-x-4">
-          <img
-            src={currentSociety?.logo_url}
-            alt=""
-            className="w-16 h-16 rounded-2xl border-2 border-gold-500/40 object-cover shadow-gold"
-          />
-          <div>
-            <div className="flex items-center space-x-2">
-              <h1 className="text-2xl sm:text-3xl font-black text-white">{currentSociety?.name}</h1>
-              {currentSociety?.is_recruiting && (
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-gold-500/10 text-gold-300 border border-gold-500/40 animate-pulse">
-                  Recruiting!
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-slate-300 mt-1 max-w-xl line-clamp-1">
-              Led by {currentSociety?.lead_name} ({currentSociety?.lead_enrollment}) • {currentSociety?.department}
-            </p>
+        <div>
+          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-navy-800 border border-gold-500/30 text-xs font-semibold text-gold-300 mb-2">
+            <span>BU (Bahria University H-11 CAMPUS) • Executive Workspace</span>
           </div>
+
+          {currentSociety ? (
+            <div className="flex items-center space-x-4 mt-2">
+              <img
+                src={currentSociety.logo_url}
+                alt=""
+                className="w-14 h-14 rounded-2xl border-2 border-gold-500/40 object-cover shadow-gold"
+              />
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-black text-white">{currentSociety.name}</h1>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  Lead: {currentSociety.lead_name} ({currentSociety.lead_enrollment}) • {currentSociety.department}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <h1 className="text-2xl font-black text-white">No Society Registered Yet</h1>
+              <p className="text-xs text-slate-400 mt-1">
+                You are authenticated as a Society Head. Click below to charter your new society at BU H-11 Campus.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-2.5">
-          <Link
-            href="/chat"
-            className="px-3.5 py-2 rounded-xl bg-navy-800 hover:bg-navy-750 text-gold-300 text-xs font-bold border border-gold-500/30 transition-colors flex items-center space-x-1.5"
-          >
-            <MessageSquare className="w-3.5 h-3.5 text-gold-400" />
-            <span>Society Chat Room</span>
-          </Link>
+          {!currentSociety ? (
+            <button
+              onClick={() => setIsNewSocietyModalOpen(true)}
+              className="px-4 py-2.5 rounded-xl bg-gold-500 hover:bg-gold-400 text-navy-950 text-xs font-black uppercase tracking-wider shadow-gold"
+            >
+              <Plus className="w-4 h-4 inline mr-1" />
+              <span>Charter New Society</span>
+            </button>
+          ) : (
+            <>
+              <Link
+                href="/chat"
+                className="px-3.5 py-2 rounded-xl bg-navy-800 hover:bg-navy-750 text-gold-300 text-xs font-bold border border-gold-500/30 transition-colors flex items-center space-x-1.5"
+              >
+                <MessageSquare className="w-3.5 h-3.5 text-gold-400" />
+                <span>Society Chat Room</span>
+              </Link>
 
-          <button
-            onClick={() => setIsEditProfileOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-navy-800 hover:bg-navy-750 text-slate-200 text-xs font-semibold border border-navy-700 transition-colors flex items-center space-x-1.5"
-          >
-            <Edit3 className="w-3.5 h-3.5" />
-            <span>Edit Profile</span>
-          </button>
+              <button
+                onClick={() => setIsFlashModalOpen(true)}
+                className="px-3.5 py-2 rounded-xl bg-navy-800 hover:bg-navy-750 text-gold-300 text-xs font-bold border border-gold-500/30 transition-colors flex items-center space-x-1.5"
+              >
+                <Volume2 className="w-3.5 h-3.5 text-gold-400" />
+                <span>Broadcast Flash</span>
+              </button>
 
-          <button
-            onClick={() => setIsFlashModalOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-navy-800 hover:bg-navy-750 text-gold-300 text-xs font-bold border border-gold-500/30 transition-colors flex items-center space-x-1.5"
-          >
-            <Volume2 className="w-3.5 h-3.5 text-gold-400" />
-            <span>Broadcast Flash</span>
-          </button>
-
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="px-4 py-2 rounded-xl bg-gold-500 hover:bg-gold-400 text-navy-950 text-xs font-black uppercase tracking-wider shadow-gold transition-all flex items-center space-x-1.5"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Draft Event</span>
-          </button>
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="px-4 py-2 rounded-xl bg-gold-500 hover:bg-gold-400 text-navy-950 text-xs font-black uppercase tracking-wider shadow-gold transition-all flex items-center space-x-1.5"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Draft Event</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Metric Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 rounded-2xl bg-navy-900 border border-navy-750">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            Drafted Events
-          </div>
-          <div className="text-2xl font-black text-white font-mono mt-1">{myEvents.length}</div>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-navy-900 border border-navy-750">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            Cleared by HOD
-          </div>
-          <div className="text-2xl font-black text-emerald-400 font-mono mt-1">
-            {myEvents.filter((e) => e.approved_by_hod).length}
-          </div>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-navy-900 border border-navy-750">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            Pending Queue
-          </div>
-          <div className="text-2xl font-black text-gold-400 font-mono mt-1">
-            {myEvents.filter((e) => !e.approved_by_hod).length}
-          </div>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-navy-900 border border-navy-750">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            Recruitment Drive
-          </div>
-          <div className="text-xs font-bold text-slate-200 mt-2 flex items-center space-x-2">
-            <span
-              className={`w-2 h-2 rounded-full ${
-                currentSociety?.is_recruiting ? 'bg-gold-400 animate-ping' : 'bg-slate-600'
-              }`}
-            />
-            <span>{currentSociety?.is_recruiting ? 'Accepting Applicants' : 'Closed'}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Society Event Management Table */}
+      {/* Events Queue Table */}
       <div className="rounded-3xl bg-navy-900 border border-navy-750 overflow-hidden shadow-2xl">
         <div className="p-6 border-b border-navy-800 flex items-center justify-between">
           <div>
-            <h2 className="text-base font-bold text-white">Society Event Proposals</h2>
+            <h2 className="text-base font-bold text-white">BU H-11 Venue Booking Proposals</h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Submit venue clearance requests to department heads. Real-time status sync.
+              Submit lab and auditorium clearance requests to department chairpersons.
             </p>
           </div>
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="px-3.5 py-1.5 rounded-xl bg-gold-500 hover:bg-gold-400 text-navy-950 text-xs font-black uppercase tracking-wider shadow-gold"
-          >
-            <Plus className="w-3.5 h-3.5 inline mr-1" />
-            <span>New Proposal</span>
-          </button>
+          {currentSociety && (
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="px-3.5 py-1.5 rounded-xl bg-gold-500 hover:bg-gold-400 text-navy-950 text-xs font-black uppercase tracking-wider shadow-gold"
+            >
+              <Plus className="w-3.5 h-3.5 inline mr-1" />
+              <span>New Proposal</span>
+            </button>
+          )}
         </div>
 
         {myEvents.length === 0 ? (
           <div className="p-12 text-center text-slate-400 space-y-3">
             <Calendar className="w-10 h-10 mx-auto text-slate-600" />
-            <h3 className="text-sm font-bold text-white">No Event Proposals Created Yet</h3>
+            <h3 className="text-sm font-bold text-white">No Event Proposals Created</h3>
             <p className="text-xs max-w-sm mx-auto">
-              Click &quot;New Proposal&quot; to draft an event for Sir Syed Auditorium, CS Lab 1, or the Amphitheater.
+              Draft an event for the AI Lab (1st Floor), Robotics Arena (2nd Floor), or Sir Syed Auditorium (Ground Floor).
             </p>
           </div>
         ) : (
@@ -287,9 +259,9 @@ export default function SocietyDashboardPage() {
             <table className="w-full text-left text-sm text-slate-300">
               <thead className="bg-navy-950/80 text-[10px] font-mono uppercase tracking-wider text-slate-400 border-b border-navy-800">
                 <tr>
-                  <th className="px-6 py-3.5">Event Title & Schedule</th>
-                  <th className="px-6 py-3.5">Category</th>
-                  <th className="px-6 py-3.5">Requested Venue</th>
+                  <th className="px-6 py-3.5">Event Title</th>
+                  <th className="px-6 py-3.5">Floor &amp; Lab</th>
+                  <th className="px-6 py-3.5">Schedule</th>
                   <th className="px-6 py-3.5">HOD Clearance</th>
                   <th className="px-6 py-3.5 text-right">Action</th>
                 </tr>
@@ -297,41 +269,21 @@ export default function SocietyDashboardPage() {
               <tbody className="divide-y divide-navy-800">
                 {myEvents.map((ev) => (
                   <tr key={ev.id} className="hover:bg-navy-850/50 transition-colors">
+                    <td className="px-6 py-4 font-bold text-white text-xs">{ev.title}</td>
                     <td className="px-6 py-4">
-                      <div className="font-bold text-white">{ev.title}</div>
-                      <div className="text-xs text-slate-400 mt-0.5 flex items-center space-x-1 font-mono text-[11px]">
-                        <Clock className="w-3 h-3 text-gold-400" />
-                        <span>
-                          {new Date(ev.start_time).toLocaleDateString([], { month: 'short', day: 'numeric' })} •{' '}
-                          {new Date(ev.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
+                      <span className="text-xs text-slate-200 block">{ev.location_name}</span>
+                      <span className="text-[10px] text-gold-400 font-mono">Floor: {ev.floor}</span>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-navy-950 text-gold-300 border border-gold-500/20">
-                        {ev.category}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-1.5 text-xs text-slate-200">
-                        <MapPin className="w-3.5 h-3.5 text-gold-400 shrink-0" />
-                        <span>{ev.location_name}</span>
-                      </div>
+                    <td className="px-6 py-4 font-mono text-[11px] text-slate-400">
+                      {new Date(ev.start_time).toLocaleDateString([], { month: 'short', day: 'numeric' })}{' '}
+                      • {new Date(ev.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </td>
                     <td className="px-6 py-4">
                       {ev.approved_by_hod ? (
                         <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>Cleared (Live on Radar)</span>
+                          <span>Approved (Live)</span>
                         </span>
-                      ) : ev.rejection_reason ? (
-                        <div className="text-xs">
-                          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40">
-                            <AlertCircle className="w-3 h-3" />
-                            <span>Action Required</span>
-                          </span>
-                          <p className="text-[11px] text-rose-300 mt-1 max-w-xs">{ev.rejection_reason}</p>
-                        </div>
                       ) : (
                         <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-md text-xs font-bold bg-gold-500/10 text-gold-300 border border-gold-500/30">
                           <Clock className="w-3.5 h-3.5 text-gold-400" />
@@ -343,7 +295,6 @@ export default function SocietyDashboardPage() {
                       <button
                         onClick={() => deleteEvent(ev.id)}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
-                        title="Delete proposal"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -356,14 +307,14 @@ export default function SocietyDashboardPage() {
         )}
       </div>
 
-      {/* CREATE EVENT MODAL */}
-      {isCreateModalOpen && (
+      {/* CREATE EVENT MODAL WITH BU H-11 FLOOR & LAB SELECTOR */}
+      {isCreateModalOpen && currentSociety && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/80 backdrop-blur-md overflow-y-auto">
           <div className="relative w-full max-w-2xl bg-navy-900 border border-gold-500/30 rounded-3xl shadow-2xl p-6 sm:p-8 my-8">
             <div className="flex items-center justify-between pb-4 border-b border-navy-800">
               <div className="flex items-center space-x-2">
                 <Calendar className="w-5 h-5 text-gold-400" />
-                <h3 className="text-lg font-bold text-white">Draft Collegiate Event Proposal</h3>
+                <h3 className="text-lg font-bold text-white">Draft BU H-11 Event Proposal</h3>
               </div>
               <button onClick={() => setIsCreateModalOpen(false)} className="text-slate-400 hover:text-white">
                 <X className="w-5 h-5" />
@@ -378,10 +329,10 @@ export default function SocietyDashboardPage() {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Annual Campus Code Sprint 2026"
+                  placeholder="e.g. AI Prompt Challenge or Robotics Face-Off"
                   value={eventTitle}
                   onChange={(e) => setEventTitle(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-navy-950 border border-navy-700 text-sm text-slate-100 focus:outline-none focus:border-gold-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-navy-950 border border-navy-700 text-sm text-slate-100 focus:border-gold-500"
                 />
               </div>
 
@@ -391,7 +342,7 @@ export default function SocietyDashboardPage() {
                   <select
                     value={eventCategory}
                     onChange={(e) => setEventCategory(e.target.value as EventCategory)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-navy-950 border border-navy-700 text-sm text-slate-100 focus:outline-none focus:border-gold-500"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-navy-950 border border-navy-700 text-sm text-slate-100 focus:border-gold-500"
                   >
                     <option value="Tech">Tech</option>
                     <option value="Sports">Sports</option>
@@ -404,49 +355,58 @@ export default function SocietyDashboardPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Estimated Capacity</label>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">Seat Capacity</label>
                   <input
                     type="number"
                     min="10"
-                    max="1000"
+                    max="600"
                     value={eventCapacity}
                     onChange={(e) => setEventCapacity(Number(e.target.value))}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-navy-950 border border-navy-700 text-sm text-slate-100 focus:outline-none focus:border-gold-500"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-navy-950 border border-navy-700 text-sm text-slate-100 focus:border-gold-500"
                   />
                 </div>
               </div>
 
-              {/* Venue Preset Selection */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Requested Venue *</label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
-                  {venuePresets.map((v) => (
-                    <button
-                      key={v.name}
-                      type="button"
-                      onClick={() => {
-                        setEventVenue(v.name);
-                        setEventLat(v.lat);
-                        setEventLng(v.lng);
-                      }}
-                      className={`p-2 rounded-lg text-left text-xs border transition-colors ${
-                        eventVenue === v.name
-                          ? 'bg-navy-800 text-gold-300 border-gold-500'
-                          : 'bg-navy-950 text-slate-400 border-navy-800 hover:border-navy-700'
-                      }`}
-                    >
-                      {v.name.split('(')[0]}
-                    </button>
-                  ))}
+              {/* BU H-11 Floor & Lab Architecture Selector */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-2xl bg-navy-950 border border-navy-800">
+                <div>
+                  <label className="block text-xs font-semibold text-gold-300 mb-1">
+                    BU H-11 Floor *
+                  </label>
+                  <select
+                    value={eventFloor}
+                    onChange={(e) => {
+                      const f = e.target.value as CampusFloor;
+                      setEventFloor(f);
+                      const facs = BU_H11_FLOORS.find((fl) => fl.floor === f)?.facilities || [];
+                      if (facs.length > 0) setEventLab(facs[0].name);
+                    }}
+                    className="w-full px-3 py-2 rounded-xl bg-navy-900 border border-navy-700 text-xs text-slate-100 focus:border-gold-500"
+                  >
+                    <option value="Ground">Ground Floor (Auditorium &amp; Quad)</option>
+                    <option value="1st">1st Floor (Computer Science &amp; SE Labs)</option>
+                    <option value="2nd">2nd Floor (Electrical &amp; Robotics Labs)</option>
+                    <option value="3rd">3rd Floor (Earth Sciences &amp; Media Studio)</option>
+                    <option value="Outdoor">Outdoor Campus Grounds</option>
+                  </select>
                 </div>
-                <input
-                  type="text"
-                  required
-                  placeholder="Venue location..."
-                  value={eventVenue}
-                  onChange={(e) => setEventVenue(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-navy-950 border border-navy-700 text-xs text-slate-100"
-                />
+
+                <div>
+                  <label className="block text-xs font-semibold text-gold-300 mb-1">
+                    Specific Lab / Hall Facility *
+                  </label>
+                  <select
+                    value={eventLab}
+                    onChange={(e) => setEventLab(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-navy-900 border border-navy-700 text-xs text-slate-100 focus:border-gold-500"
+                  >
+                    {selectedFloorFacilities.map((fac) => (
+                      <option key={fac.name} value={fac.name}>
+                        {fac.name} (Cap: {fac.capacity})
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               {/* Date & Time */}
@@ -492,10 +452,10 @@ export default function SocietyDashboardPage() {
                 <label className="block text-xs font-semibold text-slate-300 mb-1">Description & Agenda</label>
                 <textarea
                   rows={3}
-                  placeholder="Outline key activities, guest speakers, and schedule..."
+                  placeholder="Outline key activities, student prerequisites, and agenda..."
                   value={eventDescription}
                   onChange={(e) => setEventDescription(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-navy-950 border border-navy-700 text-sm text-slate-100 focus:outline-none focus:border-gold-500"
+                  className="w-full px-3.5 py-2 rounded-xl bg-navy-950 border border-navy-700 text-sm text-slate-100 focus:border-gold-500"
                 />
               </div>
 
@@ -509,9 +469,93 @@ export default function SocietyDashboardPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-gold-600 to-gold-500 text-navy-950 font-black text-xs uppercase tracking-wider shadow-gold"
+                  className="px-5 py-2.5 rounded-xl bg-gold-500 hover:bg-gold-400 text-navy-950 font-black text-xs uppercase tracking-wider shadow-gold"
                 >
-                  Submit Proposal for HOD Clearance
+                  Submit Proposal to HOD
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* CHARTER NEW SOCIETY MODAL */}
+      {isNewSocietyModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/80 backdrop-blur-md">
+          <div className="relative w-full max-w-md bg-navy-900 border border-gold-500/30 rounded-3xl p-6 shadow-2xl">
+            <h3 className="text-base font-bold text-white mb-2">Charter New Society at BU H-11</h3>
+            <p className="text-xs text-slate-400 mb-4">
+              Enter society details. A private executive chat room will automatically be established for your team.
+            </p>
+
+            <form onSubmit={handleCreateSociety} className="space-y-3.5">
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-300 mb-1">Society Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. BU H-11 Autonomous Robotics Society"
+                  value={socName}
+                  onChange={(e) => setSocName(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-navy-950 border border-navy-700 text-xs text-slate-100"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-300 mb-1">Acronym Code *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. ARS"
+                  value={socCode}
+                  onChange={(e) => setSocCode(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-navy-950 border border-navy-700 text-xs text-slate-100 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-300 mb-1">Department</label>
+                <select
+                  value={socDept}
+                  onChange={(e) => setSocDept(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-navy-950 border border-navy-700 text-xs text-slate-100"
+                >
+                  <option value="Department of Computer Science & Software Engineering">
+                    Department of Computer Science &amp; Software Engineering
+                  </option>
+                  <option value="Department of Electrical Engineering & Robotics">
+                    Department of Electrical Engineering &amp; Robotics
+                  </option>
+                  <option value="Department of Earth & Environmental Sciences">
+                    Department of Earth &amp; Environmental Sciences
+                  </option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-300 mb-1">Charter Description</label>
+                <textarea
+                  rows={2}
+                  placeholder="Mission statement and student activities..."
+                  value={socDesc}
+                  onChange={(e) => setSocDesc(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-navy-950 border border-navy-700 text-xs text-slate-100"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-2 border-t border-navy-800">
+                <button
+                  type="button"
+                  onClick={() => setIsNewSocietyModalOpen(false)}
+                  className="px-4 py-2 text-xs text-slate-400 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-gold-500 text-navy-950 font-black text-xs uppercase tracking-wider shadow-gold"
+                >
+                  Register Society
                 </button>
               </div>
             </form>
@@ -520,28 +564,20 @@ export default function SocietyDashboardPage() {
       )}
 
       {/* FLASH ANNOUNCEMENT MODAL */}
-      {isFlashModalOpen && (
+      {isFlashModalOpen && currentSociety && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/80 backdrop-blur-md">
           <div className="relative w-full max-w-md bg-navy-900 border border-gold-500/30 rounded-3xl p-6 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-navy-800">
-              <h3 className="text-base font-bold text-white">Broadcast Campus Flash</h3>
-              <button onClick={() => setIsFlashModalOpen(false)} className="text-slate-400 hover:text-white">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+            <h3 className="text-base font-bold text-white mb-2">Broadcast BU H-11 Campus Flash</h3>
 
-            <form onSubmit={handleBroadcastFlash} className="mt-4 space-y-4">
+            <form onSubmit={handleBroadcastFlash} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Message (Broadcasts across campus marquee)
-                </label>
                 <textarea
                   required
                   rows={3}
-                  placeholder="e.g. Audition registrations close at 5:00 PM today at Sir Syed Auditorium!"
+                  placeholder="e.g. Coding jam registration is open at 1st Floor AI Lab!"
                   value={flashMessage}
                   onChange={(e) => setFlashMessage(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-navy-950 border border-navy-700 text-sm text-slate-100 focus:outline-none focus:border-gold-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-navy-950 border border-navy-700 text-sm text-slate-100 focus:border-gold-500"
                 />
               </div>
 
@@ -549,7 +585,7 @@ export default function SocietyDashboardPage() {
                 <button
                   type="button"
                   onClick={() => setIsFlashModalOpen(false)}
-                  className="px-4 py-2 text-xs text-slate-400"
+                  className="px-4 py-2 text-xs text-slate-400 hover:text-white"
                 >
                   Cancel
                 </button>
@@ -558,83 +594,6 @@ export default function SocietyDashboardPage() {
                   className="px-5 py-2 rounded-xl bg-gold-500 text-navy-950 font-black text-xs uppercase tracking-wider shadow-gold"
                 >
                   Broadcast Flash
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* EDIT SOCIETY PROFILE MODAL */}
-      {isEditProfileOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/80 backdrop-blur-md">
-          <div className="relative w-full max-w-md bg-navy-900 border border-gold-500/30 rounded-3xl p-6 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-navy-800">
-              <h3 className="text-base font-bold text-white">Manage Society Profile</h3>
-              <button onClick={() => setIsEditProfileOpen(false)} className="text-slate-400 hover:text-white">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleUpdateProfile} className="mt-4 space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Society Name</label>
-                <input
-                  type="text"
-                  required
-                  value={profileName}
-                  onChange={(e) => setProfileName(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-navy-950 border border-navy-700 text-sm text-slate-100"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Logo URL</label>
-                <input
-                  type="url"
-                  required
-                  value={profileLogo}
-                  onChange={(e) => setProfileLogo(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-navy-950 border border-navy-700 text-sm text-slate-100"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Charter & Bio</label>
-                <textarea
-                  rows={3}
-                  value={profileBio}
-                  onChange={(e) => setProfileBio(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-navy-950 border border-navy-700 text-sm text-slate-100"
-                />
-              </div>
-
-              <div className="p-3 rounded-xl bg-navy-950 border border-navy-800 flex items-center justify-between">
-                <div>
-                  <div className="text-xs font-bold text-white">Recruitment Badge</div>
-                  <div className="text-[11px] text-slate-400">Display &quot;Recruiting!&quot; badge across campus feed</div>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={isRecruiting}
-                  onChange={(e) => setIsRecruiting(e.target.checked)}
-                  className="w-4 h-4 accent-gold-500 rounded cursor-pointer"
-                />
-              </div>
-
-              <div className="flex justify-end space-x-2 pt-2 border-t border-navy-800">
-                <button
-                  type="button"
-                  onClick={() => setIsEditProfileOpen(false)}
-                  className="px-4 py-2 text-xs text-slate-400"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-xl bg-gold-500 text-navy-950 font-black text-xs uppercase tracking-wider shadow-gold"
-                >
-                  Save Changes
                 </button>
               </div>
             </form>

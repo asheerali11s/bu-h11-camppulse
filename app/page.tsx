@@ -5,9 +5,10 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
 import { useUserRole } from '@/hooks/useUserRole';
-import { CampusEvent, EventCategory } from '@/types';
+import { CampusEvent, EventCategory, CampusFloor } from '@/types';
 import { EventCard } from '@/components/EventCard';
 import { SocietyModal } from '@/components/SocietyModal';
+import { H11FloorModel } from '@/components/H11FloorModel';
 import {
   MapPin,
   LayoutGrid,
@@ -23,6 +24,7 @@ import {
   MessageSquare,
   ShieldCheck,
   PlusCircle,
+  Layers,
 } from 'lucide-react';
 
 const CampusMap = dynamic(
@@ -32,7 +34,7 @@ const CampusMap = dynamic(
     loading: () => (
       <div className="w-full h-[520px] bg-navy-900 border border-navy-800 rounded-3xl flex flex-col items-center justify-center text-slate-400 animate-pulse">
         <MapPin className="w-8 h-8 text-gold-400 mb-2 animate-bounce" />
-        <span className="text-xs font-semibold text-slate-300">Loading Campus OpenStreetMap Radar...</span>
+        <span className="text-xs font-semibold text-slate-300">Loading BU H-11 OpenStreetMap Radar...</span>
       </div>
     ),
   }
@@ -42,9 +44,10 @@ export default function HomePage() {
   const { events, societies, currentUser } = useApp();
   const { isSocietyAdmin, isDeveloper } = useUserRole();
 
-  const [activeView, setActiveView] = useState<'split' | 'grid' | 'map'>('split');
+  const [activeView, setActiveView] = useState<'blueprint' | 'map' | 'grid'>('blueprint');
   const [happeningNowOnly, setHappeningNowOnly] = useState<boolean>(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [selectedFloor, setSelectedFloor] = useState<CampusFloor | 'All'>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [modalSocietyId, setModalSocietyId] = useState<string | null>(null);
@@ -60,12 +63,10 @@ export default function HomePage() {
     'Academic',
   ];
 
-  // Approved events for public student view
   const approvedEvents = useMemo(() => {
     return events.filter((e) => e.approved_by_hod);
   }, [events]);
 
-  // Happening Now count
   const happeningNowCount = useMemo(() => {
     const now = new Date();
     return approvedEvents.filter((event) => {
@@ -79,7 +80,6 @@ export default function HomePage() {
     }).length;
   }, [approvedEvents]);
 
-  // Filtered list
   const filteredEvents = useMemo(() => {
     const now = new Date();
 
@@ -99,6 +99,10 @@ export default function HomePage() {
           return false;
         }
 
+        if (selectedFloor !== 'All' && event.floor !== selectedFloor) {
+          return false;
+        }
+
         if (searchQuery.trim() !== '') {
           const q = searchQuery.toLowerCase();
           const matchTitle = event.title.toLowerCase().includes(q);
@@ -113,7 +117,7 @@ export default function HomePage() {
         return true;
       })
       .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
-  }, [approvedEvents, happeningNowOnly, selectedCategory, searchQuery]);
+  }, [approvedEvents, happeningNowOnly, selectedCategory, selectedFloor, searchQuery]);
 
   const activeSocietyModalData = useMemo(() => {
     if (!modalSocietyId) return null;
@@ -122,7 +126,7 @@ export default function HomePage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      {/* Sleek Collegiate Hero Section (Deep Dark Blue & Gold) */}
+      {/* Hero Section */}
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-navy-900 via-navy-950 to-[#040812] border border-gold-500/30 p-6 sm:p-10 shadow-2xl">
         <div className="absolute top-0 right-0 -mt-10 -mr-10 w-96 h-96 bg-gold-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -130,19 +134,18 @@ export default function HomePage() {
           <div className="max-w-2xl space-y-3">
             <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-navy-800 border border-gold-500/30 text-xs font-semibold text-gold-300">
               <ShieldCheck className="w-3.5 h-3.5 text-gold-400" />
-              <span>Verified Campus Intelligence • Bahria University</span>
+              <span>Plot 83, Sector H-11/4 Islamabad • Verified Network</span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
-              Collegiate Events &amp; <span className="text-gold-400 font-serif">Society Hub</span>
+              BU (<span className="text-gold-400 font-serif">Bahria University H-11 CAMPUS</span>) Hub
             </h1>
 
             <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-              Official campus radar replacing fragmented chats and paper flyers. Interactive venue maps,
-              department-verified bookings, and real-time society discussion rooms.
+              Official campus radar, interactive floor &amp; lab blueprints, society management,
+              and WhatsApp-style group chats for students of Bahria University H-11 Campus.
             </p>
 
-            {/* Quick Action Links */}
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <Link
                 href="/chat"
@@ -158,7 +161,7 @@ export default function HomePage() {
                   className="px-4 py-2.5 rounded-xl bg-navy-800 hover:bg-navy-750 text-gold-300 border border-gold-500/30 font-bold text-xs transition-colors flex items-center space-x-2"
                 >
                   <PlusCircle className="w-4 h-4 text-gold-400" />
-                  <span>Create Society Event</span>
+                  <span>Draft Society Event</span>
                 </Link>
               )}
             </div>
@@ -188,7 +191,7 @@ export default function HomePage() {
             <div className="p-4 rounded-2xl bg-navy-850/80 border border-navy-700 text-center">
               <div className="text-2xl font-black text-white font-mono">{societies.length}</div>
               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">
-                Societies
+                H-11 Societies
               </div>
             </div>
           </div>
@@ -203,7 +206,7 @@ export default function HomePage() {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Search verified events, venues (e.g. CS Lab 1), or societies..."
+              placeholder="Search labs, halls, or events (e.g. AI Lab, Sir Syed Hall)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-navy-900 border border-navy-750 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-gold-500 transition-colors"
@@ -232,18 +235,19 @@ export default function HomePage() {
               <span>Happening Now ({happeningNowCount})</span>
             </button>
 
-            {/* View Switcher */}
+            {/* View Switcher: Blueprint Floor Model vs Satellite Radar vs Cards Grid */}
             <div className="flex items-center p-1 rounded-xl bg-navy-900 border border-navy-750">
               <button
-                onClick={() => setActiveView('split')}
+                onClick={() => setActiveView('blueprint')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-colors ${
-                  activeView === 'split'
+                  activeView === 'blueprint'
                     ? 'bg-navy-800 text-gold-400 shadow-sm border border-gold-500/20'
                     : 'text-slate-400 hover:text-white'
                 }`}
+                title="H-11 Multi-Floor & Lab Blueprint"
               >
-                <Compass className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">Dual</span>
+                <Layers className="w-3.5 h-3.5" />
+                <span>Floor Blueprint</span>
               </button>
               <button
                 onClick={() => setActiveView('map')}
@@ -252,9 +256,10 @@ export default function HomePage() {
                     ? 'bg-navy-800 text-gold-400 shadow-sm border border-gold-500/20'
                     : 'text-slate-400 hover:text-white'
                 }`}
+                title="Satellite GPS Radar"
               >
                 <MapIcon className="w-3.5 h-3.5" />
-                <span>Map</span>
+                <span>GPS Radar</span>
               </button>
               <button
                 onClick={() => setActiveView('grid')}
@@ -263,6 +268,7 @@ export default function HomePage() {
                     ? 'bg-navy-800 text-gold-400 shadow-sm border border-gold-500/20'
                     : 'text-slate-400 hover:text-white'
                 }`}
+                title="Chronological Cards Grid"
               >
                 <LayoutGrid className="w-3.5 h-3.5" />
                 <span>Grid</span>
@@ -271,7 +277,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Category Pills Bar */}
+        {/* Category Filter Pills */}
         <div className="flex items-center space-x-2 overflow-x-auto py-1 scrollbar-none">
           {categories.map((cat) => {
             const isSelected = selectedCategory === cat;
@@ -292,120 +298,110 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Main Content: Clean State when no events exist */}
-      {filteredEvents.length === 0 ? (
-        <div className="p-16 rounded-3xl bg-navy-900 border border-gold-500/20 text-center space-y-4 shadow-xl">
-          <div className="w-16 h-16 rounded-2xl bg-navy-800 border border-gold-500/30 flex items-center justify-center mx-auto text-gold-400 shadow-gold">
-            <Calendar className="w-8 h-8" />
+      {/* Main View Layout */}
+      {activeView === 'blueprint' && (
+        <div className="space-y-8">
+          {/* Multi-Level Floor Model */}
+          <H11FloorModel
+            events={filteredEvents}
+            onSelectFacility={(facName, floor) => {
+              setSearchQuery(facName);
+              setSelectedFloor(floor);
+            }}
+          />
+
+          {/* Satellite Map */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center space-x-2">
+                <MapPin className="w-4 h-4 text-gold-400" />
+                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                  Plot 83, Sector H-11/4 Satellite Radar
+                </h2>
+              </div>
+              <span className="text-[11px] text-slate-400 font-mono">
+                Lat: 33.6582 • Lng: 73.0175
+              </span>
+            </div>
+            <CampusMap
+              events={filteredEvents}
+              selectedEventId={selectedEventId}
+              onSelectEvent={(ev) => setSelectedEventId(ev.id)}
+              height="400px"
+            />
           </div>
 
-          <div className="space-y-1.5 max-w-md mx-auto">
-            <h3 className="text-xl font-black text-white tracking-tight">
-              No Public Events Scheduled
-            </h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              The event slate is clean. Verified society heads can draft new proposals in the Society
-              Dashboard, which will appear on the campus radar immediately following Department HOD venue clearance.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-            {(isSocietyAdmin || isDeveloper) ? (
-              <Link
-                href="/dashboard/society"
-                className="px-5 py-2.5 rounded-xl bg-gold-500 hover:bg-gold-400 text-navy-950 text-xs font-black uppercase tracking-wider shadow-gold transition-all inline-flex items-center space-x-2"
-              >
-                <PlusCircle className="w-4 h-4" />
-                <span>Draft New Society Event</span>
-              </Link>
-            ) : (
-              <Link
-                href="/chat"
-                className="px-5 py-2.5 rounded-xl bg-navy-800 hover:bg-navy-750 text-gold-300 border border-gold-500/30 text-xs font-bold transition-all inline-flex items-center space-x-2"
-              >
-                <MessageSquare className="w-4 h-4 text-gold-400" />
-                <span>Join Verified Campus Chats</span>
-              </Link>
-            )}
-
-            {searchQuery && (
-              <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedCategory('All');
-                  setHappeningNowOnly(false);
-                }}
-                className="px-4 py-2.5 rounded-xl bg-navy-950 text-slate-400 hover:text-white text-xs font-semibold border border-navy-800"
-              >
-                Reset Search
-              </button>
-            )}
-          </div>
+          {/* Event Feed */}
+          {filteredEvents.length > 0 && (
+            <div>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-4 flex items-center space-x-2">
+                <LayoutGrid className="w-4 h-4 text-gold-400" />
+                <span>Scheduled Campus Events ({filteredEvents.length})</span>
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredEvents.map((event) => (
+                  <EventCard
+                    key={event.id}
+                    event={event}
+                    onOpenSocietyModal={(sId) => setModalSocietyId(sId)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-      ) : (
-        <>
-          {/* Split Mode: Interactive Map on Top, Grid Below */}
-          {activeView === 'split' && (
-            <div className="space-y-8">
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center space-x-2">
-                    <MapPin className="w-4 h-4 text-gold-400" />
-                    <h2 className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                      Interactive Campus Radar
-                    </h2>
-                  </div>
-                  <span className="text-[11px] text-slate-400">
-                    Click pin to view hall clearance &amp; export .ics
-                  </span>
-                </div>
-                <CampusMap
-                  events={filteredEvents}
-                  selectedEventId={selectedEventId}
-                  onSelectEvent={(ev) => setSelectedEventId(ev.id)}
-                  height="460px"
-                />
+      )}
+
+      {activeView === 'map' && (
+        <div className="space-y-4">
+          <CampusMap
+            events={filteredEvents}
+            selectedEventId={selectedEventId}
+            onSelectEvent={(ev) => setSelectedEventId(ev.id)}
+            height="650px"
+          />
+        </div>
+      )}
+
+      {activeView === 'grid' && (
+        <div className="space-y-6">
+          {filteredEvents.length === 0 ? (
+            <div className="p-16 rounded-3xl bg-navy-900 border border-gold-500/20 text-center space-y-4 shadow-xl">
+              <div className="w-16 h-16 rounded-2xl bg-navy-800 border border-gold-500/30 flex items-center justify-center mx-auto text-gold-400 shadow-gold">
+                <Calendar className="w-8 h-8" />
               </div>
 
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-2">
-                    <LayoutGrid className="w-4 h-4 text-gold-400" />
-                    <h2 className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                      Chronological Event Queue ({filteredEvents.length})
-                    </h2>
-                  </div>
-                </div>
+              <div className="space-y-1.5 max-w-md mx-auto">
+                <h3 className="text-xl font-black text-white tracking-tight">
+                  No Public Events Scheduled
+                </h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  The BU H-11 event slate is clean. Verified society heads can draft new proposals
+                  in the Society Dashboard, which will appear here immediately after Department HOD venue clearance.
+                </p>
+              </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredEvents.map((event) => (
-                    <EventCard
-                      key={event.id}
-                      event={event}
-                      onOpenSocietyModal={(sId) => setModalSocietyId(sId)}
-                      onFocusOnMap={(ev) => {
-                        setSelectedEventId(ev.id);
-                        window.scrollTo({ top: 320, behavior: 'smooth' });
-                      }}
-                    />
-                  ))}
-                </div>
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                {(isSocietyAdmin || isDeveloper) ? (
+                  <Link
+                    href="/dashboard/society"
+                    className="px-5 py-2.5 rounded-xl bg-gold-500 hover:bg-gold-400 text-navy-950 text-xs font-black uppercase tracking-wider shadow-gold transition-all inline-flex items-center space-x-2"
+                  >
+                    <PlusCircle className="w-4 h-4" />
+                    <span>Draft New Society Event</span>
+                  </Link>
+                ) : (
+                  <Link
+                    href="/chat"
+                    className="px-5 py-2.5 rounded-xl bg-navy-800 hover:bg-navy-750 text-gold-300 border border-gold-500/30 text-xs font-bold transition-all inline-flex items-center space-x-2"
+                  >
+                    <MessageSquare className="w-4 h-4 text-gold-400" />
+                    <span>Join Verified Campus Chats</span>
+                  </Link>
+                )}
               </div>
             </div>
-          )}
-
-          {activeView === 'map' && (
-            <div className="space-y-4">
-              <CampusMap
-                events={filteredEvents}
-                selectedEventId={selectedEventId}
-                onSelectEvent={(ev) => setSelectedEventId(ev.id)}
-                height="680px"
-              />
-            </div>
-          )}
-
-          {activeView === 'grid' && (
+          ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredEvents.map((event) => (
                 <EventCard
@@ -416,7 +412,7 @@ export default function HomePage() {
               ))}
             </div>
           )}
-        </>
+        </div>
       )}
 
       {/* Society Profile Viewer Modal */}
