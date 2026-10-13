@@ -20,6 +20,8 @@ import {
   LogOut,
   ShieldCheck,
   PlusCircle,
+  Key,
+  Lock,
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -30,11 +32,15 @@ export const Navbar: React.FC = () => {
     announcements,
     githubConfig,
     triggerGitHubSync,
+    unlockAdminPrivilege,
     logout,
   } = useApp();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [adminUnlockOpen, setAdminUnlockOpen] = useState(false);
+  const [unlockKey, setUnlockKey] = useState('');
+  const [unlockError, setUnlockError] = useState<string | null>(null);
 
   const activeAnnouncements = announcements.filter((a) => a.active);
   const isActive = (path: string) => pathname === path;
@@ -209,6 +215,18 @@ export const Navbar: React.FC = () => {
                     </div>
                   </div>
 
+                  {/* Unlock Admin button if not yet developer */}
+                  {!isDeveloper && (
+                    <button
+                      onClick={() => setAdminUnlockOpen(true)}
+                      className="px-2.5 py-1.5 rounded-xl bg-navy-900 hover:bg-gold-500/20 text-gold-400 border border-gold-500/30 text-[11px] font-bold transition-all flex items-center space-x-1.5 shadow-sm"
+                      title="Platform Owner Root Admin Unlock"
+                    >
+                      <Key className="w-3.5 h-3.5 text-gold-400" />
+                      <span className="hidden lg:inline">Unlock Admin</span>
+                    </button>
+                  )}
+
                   <button
                     onClick={() => logout()}
                     className="p-2 rounded-xl bg-navy-900 hover:bg-rose-950/60 border border-navy-750 hover:border-rose-500/40 text-slate-400 hover:text-rose-300 transition-colors"
@@ -289,6 +307,19 @@ export const Navbar: React.FC = () => {
               </Link>
             )}
 
+            {currentUser && !isDeveloper && (
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setAdminUnlockOpen(true);
+                }}
+                className="w-full text-left px-3 py-2 rounded-lg text-sm font-semibold text-gold-400 hover:bg-navy-850 flex items-center space-x-2"
+              >
+                <Key className="w-4 h-4" />
+                <span>🔑 Platform Owner Admin Unlock</span>
+              </button>
+            )}
+
             <div className="pt-3 border-t border-navy-800 flex items-center justify-between">
               {currentUser ? (
                 <button
@@ -318,6 +349,70 @@ export const Navbar: React.FC = () => {
 
       {/* Global Auth Modal */}
       <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
+
+      {/* Platform Owner Master Key Unlock Modal */}
+      {adminUnlockOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/85 backdrop-blur-md">
+          <div className="relative w-full max-w-sm bg-navy-900 border border-gold-500/40 rounded-3xl p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-navy-800">
+              <div className="flex items-center space-x-2">
+                <Key className="w-4 h-4 text-gold-400" />
+                <h3 className="text-base font-bold text-white">Platform Owner Unlock</h3>
+              </div>
+              <button
+                onClick={() => {
+                  setAdminUnlockOpen(false);
+                  setUnlockError(null);
+                  setUnlockKey('');
+                }}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-400">
+              Enter the BU H-11 Platform Owner Master Key to elevate this session ({currentUser?.enrollment_id || 'guest'}) to Root Developer/Admin privileges.
+            </p>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                setUnlockError(null);
+                const res = unlockAdminPrivilege(unlockKey);
+                if (res.success) {
+                  setAdminUnlockOpen(false);
+                  setUnlockKey('');
+                } else {
+                  setUnlockError(res.message);
+                }
+              }}
+              className="space-y-3"
+            >
+              {unlockError && (
+                <div className="p-2.5 rounded-xl bg-rose-950/60 border border-rose-800 text-xs text-rose-300">
+                  {unlockError}
+                </div>
+              )}
+              <input
+                type="password"
+                required
+                autoFocus
+                placeholder="Admin Master Key"
+                value={unlockKey}
+                onChange={(e) => setUnlockKey(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-navy-950 border border-navy-700 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-gold-500 font-mono text-center"
+              />
+              <button
+                type="submit"
+                className="w-full py-2.5 rounded-xl bg-gold-500 hover:bg-gold-400 text-navy-950 font-black text-xs uppercase tracking-wider shadow-gold transition-all"
+              >
+                Elevate to Platform Owner
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
 };

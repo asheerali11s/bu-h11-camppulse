@@ -186,6 +186,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (savedGitConfig) {
         setGithubConfig(JSON.parse(savedGitConfig));
       }
+
+      // Sync with Centralized Server Database
+      fetch('/api/db')
+        .then((res) => res.json())
+        .then((res) => {
+          if (res.success && res.data) {
+            if (res.data.users?.length) setUsersList(res.data.users);
+            if (res.data.events) setEvents(res.data.events);
+            if (res.data.societies) setSocieties(res.data.societies);
+            if (res.data.channels) setChannels(res.data.channels);
+            if (res.data.messages) setMessages(res.data.messages);
+          }
+        })
+        .catch((e) => console.warn('Server sync notice:', e));
     } catch (e) {
       console.warn('LocalStorage hydration notice:', e);
     } finally {
@@ -310,6 +324,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentUser(newUser);
     setIsAuthenticated(true);
     persist('user', newUser);
+
+    fetch('/api/db', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'REGISTER_USER', payload: { user: newUser } }),
+    }).catch(() => {});
+
     logAudit(
       'STUDENT_REGISTERED',
       `Student registered: ${newUser.enrollment_id} (${newUser.full_name} • ${newUser.department} • ${newUser.semester})`
@@ -347,6 +368,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setUsersList(updatedList);
     persist('users_list', updatedList);
 
+    fetch('/api/db', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'PROMOTE_USER', payload: { userId: currentUser.id, role: 'developer' } }),
+    }).catch(() => {});
+
     logAudit('ROOT_PRIVILEGE_UNLOCKED', `Admin master privilege unlocked for ${currentUser.enrollment_id}`, 'warning');
     return { success: true, message: 'Admin Master Privilege verified and activated.' };
   };
@@ -356,6 +383,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const updated = usersList.map((u) => (u.id === userId ? { ...u, is_verified: true } : u));
     setUsersList(updated);
     persist('users_list', updated);
+
+    fetch('/api/db', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'VERIFY_USER', payload: { userId } }),
+    }).catch(() => {});
 
     if (currentUser?.id === userId) {
       const mod = { ...currentUser, is_verified: true };
@@ -407,6 +440,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setUsersList(updated);
     persist('users_list', updated);
 
+    fetch('/api/db', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'PROMOTE_USER', payload: { userId, role: newRole, societyName } }),
+    }).catch(() => {});
+
     if (currentUser?.id === userId) {
       const mod = {
         ...currentUser,
@@ -428,6 +467,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const updated = usersList.filter((u) => u.id !== userId);
     setUsersList(updated);
     persist('users_list', updated);
+
+    fetch('/api/db', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'DELETE_USER', payload: { userId } }),
+    }).catch(() => {});
+
     logAudit('USER_DELETED', `Admin deleted user profile ID ${userId}`, 'warning');
     triggerGitHubSync().catch(console.error);
   };
@@ -516,6 +562,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       persist('channels', updated);
       return updated;
     });
+
+    fetch('/api/db', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'SEND_MESSAGE', payload: { message: newMsg } }),
+    }).catch(() => {});
 
     logAudit('CHAT_MESSAGE_SENT', `[${currentUser.enrollment_id}] sent message in '${targetChannel?.name || channelId}'`);
     return { success: true };
@@ -670,11 +722,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addEvent = async (eventData: Omit<CampusEvent, 'id' | 'approved_by_hod' | 'attendee_count'>) => {
     const newId = `e-${Date.now()}`;
     const targetSociety = societies.find((s) => s.id === eventData.society_id);
+    const isOwner = currentUser?.role === 'developer';
 
     const newEvent: CampusEvent = {
       ...eventData,
       id: newId,
-      approved_by_hod: true, // Posts are live immediately for student registration!
+      approved_by_hod: isOwner, // Requires Admin approval if posted by society head!
       attendee_count: 0,
       registered_students: [],
       society: targetSociety,
@@ -684,7 +737,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const updated = [newEvent, ...events];
     setEvents(updated);
     persist('events', updated);
-    logAudit('EVENT_POSTED', `Upcoming event posted '${newEvent.title}' at ${newEvent.location_name}`);
+
+    fetch('/api/db', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'CREATE_EVENT', payload: { event: newEvent } }),
+    }).catch(() => {});
+
+    logAudit('EVENT_POSTED', `Upcoming event posted '${newEvent.title}' (Approved: ${isOwner})`);
     triggerGitHubSync().catch(console.error);
   };
 
@@ -701,6 +761,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const updated = events.filter((ev) => ev.id !== eventId);
     setEvents(updated);
     persist('events', updated);
+
+    fetch('/api/db', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'DELETE_EVENT', payload: { eventId } }),
+    }).catch(() => {});
+
     logAudit('EVENT_DELETED', `Deleted event: ${deleted?.title || eventId}`, 'warning');
     triggerGitHubSync().catch(console.error);
   };
@@ -712,7 +779,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
     setEvents(updated);
     persist('events', updated);
-    logAudit('EVENT_APPROVED', `Approved event: ${target?.title || eventId}`);
+
+    fetch('/api/db', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'APPROVE_EVENT', payload: { eventId } }),
+    }).catch(() => {});
+
+    logAudit('EVENT_APPROVED', `Admin approved campus post: ${target?.title || eventId}`);
     triggerGitHubSync().catch(console.error);
   };
 
@@ -723,6 +797,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
     setEvents(updated);
     persist('events', updated);
+
+    fetch('/api/db', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'REJECT_EVENT', payload: { eventId, reason } }),
+    }).catch(() => {});
+
     logAudit('EVENT_REJECTED', `Rejected '${target?.title}': ${reason}`, 'warning');
     triggerGitHubSync().catch(console.error);
   };
@@ -764,6 +845,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setEvents(updated);
     persist('events', updated);
+
+    fetch('/api/db', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'REGISTER_FOR_EVENT', payload: { eventId, student: regEntry } }),
+    }).catch(() => {});
+
     logAudit('STUDENT_EVENT_REGISTRATION', `[${currentUser.enrollment_id}] registered for '${targetEvent.title}'`);
     triggerGitHubSync().catch(console.error);
     return { success: true, message: `Successfully registered for ${targetEvent.title}!` };

@@ -70,6 +70,10 @@ export default function HomePage() {
 
   const filteredEvents = useMemo(() => {
     return events.filter((ev) => {
+      // Must be approved by Admin, unless user is the Platform Admin or author previewing it
+      const isVisible = ev.approved_by_hod || isDeveloper || ev.created_by_enrollment === currentUser?.enrollment_id;
+      if (!isVisible) return false;
+
       if (selectedDept !== 'All' && ev.target_department && ev.target_department !== 'All Departments' && ev.target_department !== selectedDept) {
         return false;
       }
@@ -91,7 +95,7 @@ export default function HomePage() {
 
       return true;
     });
-  }, [events, selectedDept, selectedCategory, searchQuery]);
+  }, [events, selectedDept, selectedCategory, searchQuery, isDeveloper, currentUser]);
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
