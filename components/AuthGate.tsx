@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
-import { UserRole } from '@/types';
+import { AcademicDepartment } from '@/types';
+import { ACADEMIC_DEPARTMENTS, SEMESTERS } from '@/utils/mockData';
 import {
   Lock,
   User,
@@ -14,46 +15,47 @@ import {
   AlertCircle,
   ArrowRight,
   Sparkles,
+  KeyRound,
 } from 'lucide-react';
 
 export const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { currentUser, isAuthenticated, login, register, loading } = useApp();
+  const { currentUser, isAuthenticated, login, register, unlockAdminPrivilege, loading } = useApp();
   const [isRegister, setIsRegister] = useState(false);
+  const [showAdminUnlock, setShowAdminUnlock] = useState(false);
+  const [adminKeyInput, setAdminKeyInput] = useState('');
 
   // Sign In Form State
   const [loginEnrollment, setLoginEnrollment] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
 
-  // Register Form State
+  // Register Form State (STRICTLY STUDENTS ONLY)
   const [regEnrollment, setRegEnrollment] = useState('');
   const [regFullName, setRegFullName] = useState('');
   const [regEmail, setRegEmail] = useState('');
-  const [regDepartment, setRegDepartment] = useState('Department of Computer Science & Software Engineering');
-  const [regRole, setRegRole] = useState<UserRole>('student');
-  const [regSocietyName, setRegSocietyName] = useState('');
+  const [regDepartment, setRegDepartment] = useState<AcademicDepartment>('Software Engineering');
+  const [regSemester, setRegSemester] = useState('1st Semester');
   const [regPassword, setRegPassword] = useState('');
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // If loading local storage state, show brief collegiate loader
   if (loading) {
     return (
       <div className="min-h-screen bg-navy-950 flex flex-col items-center justify-center text-slate-300">
         <div className="w-16 h-16 rounded-2xl bg-navy-900 border border-gold-500/40 flex items-center justify-center shadow-gold animate-pulse mb-3">
           <span className="font-serif font-black text-gold-400 text-2xl">BU</span>
         </div>
-        <p className="text-xs font-mono text-gold-300">Verifying BU H-11 Credentials...</p>
+        <p className="text-xs font-mono text-gold-300">Loading BU H-11 Portal...</p>
       </div>
     );
   }
 
-  // If user is logged in, render the application!
+  // If user is authenticated, render application!
   if (isAuthenticated && currentUser) {
     return <>{children}</>;
   }
 
-  // Otherwise, FORCE USER LOGIN / REGISTRATION FIRST!
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
@@ -75,17 +77,28 @@ export const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) 
 
     setIsSubmitting(true);
     const res = await register({
-      enrollment_id: regEnrollment,
-      full_name: regFullName,
-      email: regEmail,
+      enrollment_id: regEnrollment.trim(),
+      full_name: regFullName.trim(),
+      email: regEmail.trim(),
       department: regDepartment,
-      role: regRole,
-      society_name: regRole === 'society_admin' ? regSocietyName : undefined,
+      semester: regSemester,
+      password: regPassword,
     });
     setIsSubmitting(false);
 
     if (!res.success) {
       setErrorMsg(res.message || 'Registration failed.');
+    }
+  };
+
+  const handleAdminMasterUnlock = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    const res = unlockAdminPrivilege(adminKeyInput);
+    if (res.success) {
+      setSuccessMsg(res.message);
+    } else {
+      setErrorMsg(res.message);
     }
   };
 
@@ -105,11 +118,11 @@ export const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) 
             BU (Bahria University H-11 CAMPUS)
           </h1>
           <p className="text-xs text-gold-300 font-medium">
-            Plot 83, Sector H-11/4 Islamabad • Official Collegiate Event &amp; Society Hub
+            Plot 83, Sector H-11/4 Islamabad • Verified Society &amp; Event Platform
           </p>
           <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-navy-900 border border-gold-500/30 text-[11px] text-slate-300 mt-2">
             <ShieldCheck className="w-3.5 h-3.5 text-gold-400" />
-            <span>Collegiate Gate: Sign in with your Enrollment ID to proceed</span>
+            <span>Collegiate Gate: Sign in with your Enrollment ID to access</span>
           </div>
         </div>
 
@@ -121,9 +134,10 @@ export const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) 
               onClick={() => {
                 setIsRegister(false);
                 setErrorMsg(null);
+                setShowAdminUnlock(false);
               }}
               className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                !isRegister
+                !isRegister && !showAdminUnlock
                   ? 'bg-navy-800 text-gold-400 border border-gold-500/30 shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
@@ -134,14 +148,15 @@ export const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) 
               onClick={() => {
                 setIsRegister(true);
                 setErrorMsg(null);
+                setShowAdminUnlock(false);
               }}
               className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                isRegister
+                isRegister && !showAdminUnlock
                   ? 'bg-navy-800 text-gold-400 border border-gold-500/30 shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              Register New Account
+              Register New Student
             </button>
           </div>
 
@@ -152,19 +167,63 @@ export const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) 
             </div>
           )}
 
-          {/* SIGN IN FORM */}
-          {!isRegister ? (
+          {successMsg && (
+            <div className="p-3 rounded-xl bg-emerald-950/60 border border-emerald-800/80 text-xs text-emerald-300 flex items-center space-x-2">
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+              <span>{successMsg}</span>
+            </div>
+          )}
+
+          {/* ADMIN MASTER KEY UNLOCK OVERLAY (For platform owner Asheer) */}
+          {showAdminUnlock ? (
+            <form onSubmit={handleAdminMasterUnlock} className="space-y-4">
+              <div className="p-3 rounded-xl bg-navy-950 border border-gold-500/30 text-xs text-gold-300 flex items-center space-x-2">
+                <KeyRound className="w-4 h-4 text-gold-400 shrink-0" />
+                <span>Restricted to Platform Owner: Enter Master Admin Key to unlock root session.</span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Master Admin Secret Key *
+                </label>
+                <input
+                  type="password"
+                  required
+                  placeholder="Enter Master Key"
+                  value={adminKeyInput}
+                  onChange={(e) => setAdminKeyInput(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl bg-navy-950 border border-navy-700 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-gold-500 font-mono"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3 rounded-xl bg-gold-500 hover:bg-gold-400 text-navy-950 font-black text-xs uppercase tracking-wider shadow-gold transition-all"
+              >
+                Unlock Platform Owner Access
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowAdminUnlock(false)}
+                className="w-full text-center text-xs text-slate-400 hover:text-white"
+              >
+                ← Back to standard student sign in
+              </button>
+            </form>
+          ) : !isRegister ? (
+            /* SIGN IN FORM */
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Student / Faculty Enrollment ID *
+                  Student Enrollment ID *
                 </label>
                 <div className="relative">
                   <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
                     type="text"
                     required
-                    placeholder="e.g. 01-134221-042"
+                    placeholder="e.g. 01-134221-042 or asheer"
                     value={loginEnrollment}
                     onChange={(e) => setLoginEnrollment(e.target.value)}
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-navy-950 border border-navy-700 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-gold-500 font-mono"
@@ -198,20 +257,31 @@ export const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) 
                 <ArrowRight className="w-4 h-4" />
               </button>
 
-              <div className="p-3 rounded-2xl bg-navy-950/70 border border-navy-800 text-[11px] text-slate-400 space-y-1 text-center">
-                <p>New student or executive at Bahria University H-11 Campus?</p>
+              <div className="flex items-center justify-between pt-2 text-[11px] text-slate-400">
                 <button
                   type="button"
                   onClick={() => setIsRegister(true)}
                   className="text-gold-400 hover:underline font-bold"
                 >
-                  Register your real Enrollment ID and Department →
+                  New Student? Register here →
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAdminUnlock(true)}
+                  className="text-slate-500 hover:text-gold-400 transition-colors"
+                >
+                  Platform Owner Key
                 </button>
               </div>
             </form>
           ) : (
-            /* REGISTER FORM */
+            /* REGISTER STUDENT FORM */
             <form onSubmit={handleRegister} className="space-y-3.5">
+              <div className="p-2.5 rounded-xl bg-navy-950 border border-gold-500/20 text-[11px] text-slate-300 flex items-center space-x-2">
+                <ShieldCheck className="w-4 h-4 text-gold-400 shrink-0" />
+                <span>All registrations are enrolled as Students. Society Head &amp; HOD roles are granted solely by Admin.</span>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-300 mb-1">
@@ -233,7 +303,7 @@ export const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) 
                   <input
                     type="text"
                     required
-                    placeholder="Asheer Ali"
+                    placeholder="Muhammad Bilal"
                     value={regFullName}
                     onChange={(e) => setRegFullName(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl bg-navy-950 border border-navy-700 text-xs text-slate-100 focus:border-gold-500"
@@ -250,7 +320,7 @@ export const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) 
                   <input
                     type="email"
                     required
-                    placeholder="your.name@bahria.edu.pk"
+                    placeholder="student@bahria.edu.pk"
                     value={regEmail}
                     onChange={(e) => setRegEmail(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 rounded-xl bg-navy-950 border border-navy-700 text-xs text-slate-100 focus:border-gold-500"
@@ -258,61 +328,41 @@ export const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) 
                 </div>
               </div>
 
+              {/* Department Dropdown (Psychology, Software Engineering, Electrical, Computer Science, Artificial Intelligence) */}
               <div>
                 <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-                  BU H-11 Academic Department *
+                  Academic Department *
                 </label>
                 <select
                   value={regDepartment}
-                  onChange={(e) => setRegDepartment(e.target.value)}
+                  onChange={(e) => setRegDepartment(e.target.value as AcademicDepartment)}
                   className="w-full px-3 py-2 rounded-xl bg-navy-950 border border-navy-700 text-xs text-slate-100 focus:border-gold-500 cursor-pointer"
                 >
-                  <option value="Department of Computer Science & Software Engineering">
-                    Department of Computer Science &amp; Software Engineering (1st Floor)
-                  </option>
-                  <option value="Department of Electrical Engineering & Robotics">
-                    Department of Electrical Engineering &amp; Robotics (2nd Floor)
-                  </option>
-                  <option value="Department of Earth & Environmental Sciences">
-                    Department of Earth &amp; Environmental Sciences (3rd Floor)
-                  </option>
-                  <option value="Department of Media & Management Sciences">
-                    Department of Media &amp; Management Sciences
-                  </option>
+                  {ACADEMIC_DEPARTMENTS.map((dept) => (
+                    <option key={dept} value={dept}>
+                      {dept}
+                    </option>
+                  ))}
                 </select>
               </div>
 
+              {/* Semester Dropdown */}
               <div>
                 <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-                  Campus Role *
+                  Current Semester *
                 </label>
                 <select
-                  value={regRole}
-                  onChange={(e) => setRegRole(e.target.value as UserRole)}
+                  value={regSemester}
+                  onChange={(e) => setRegSemester(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl bg-navy-950 border border-navy-700 text-xs text-slate-100 focus:border-gold-500 cursor-pointer"
                 >
-                  <option value="student">🎓 Student (General Campus)</option>
-                  <option value="society_admin">🎪 Society Head / Executive</option>
-                  <option value="hod">🏛️ Department Head (HOD)</option>
-                  <option value="developer">⚡ Campus Platform Admin</option>
+                  {SEMESTERS.map((sem) => (
+                    <option key={sem} value={sem}>
+                      {sem}
+                    </option>
+                  ))}
                 </select>
               </div>
-
-              {regRole === 'society_admin' && (
-                <div>
-                  <label className="block text-[11px] font-semibold text-gold-300 mb-1">
-                    Your Society Name to Register *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. BU H-11 Computing Society or Sports Guild"
-                    value={regSocietyName}
-                    onChange={(e) => setRegSocietyName(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-navy-950 border border-gold-500/40 text-xs text-gold-200 focus:border-gold-500"
-                  />
-                </div>
-              )}
 
               <div>
                 <label className="block text-[11px] font-semibold text-slate-300 mb-1">
@@ -336,7 +386,7 @@ export const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) 
                 disabled={isSubmitting}
                 className="w-full py-3 rounded-xl bg-gradient-to-r from-gold-600 to-gold-500 hover:from-gold-500 hover:to-gold-400 text-navy-950 font-black text-xs uppercase tracking-wider shadow-gold transition-all flex items-center justify-center space-x-2 mt-4"
               >
-                <span>{isSubmitting ? 'Registering...' : 'Register Verified Enrollment ID'}</span>
+                <span>{isSubmitting ? 'Registering...' : 'Register Student Account'}</span>
                 <CheckCircle2 className="w-4 h-4" />
               </button>
             </form>

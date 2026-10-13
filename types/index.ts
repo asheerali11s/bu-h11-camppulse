@@ -1,12 +1,21 @@
 export type UserRole = 'developer' | 'hod' | 'society_admin' | 'student';
 
+export type AcademicDepartment =
+  | 'Psychology'
+  | 'Software Engineering'
+  | 'Electrical Engineering'
+  | 'Computer Science'
+  | 'Artificial Intelligence';
+
 export interface UserProfile {
   id: string;
   enrollment_id: string; // e.g. "01-134221-042"
   email: string;
   full_name: string;
-  department: string; // e.g. "Computer Science & Software Engineering"
+  department: AcademicDepartment;
+  semester: string; // e.g. "1st", "2nd", ..., "8th"
   role: UserRole;
+  is_verified: boolean;
   society_id?: string | null;
   society_name?: string | null;
   avatar_url?: string;
@@ -21,7 +30,7 @@ export interface Society {
   description: string;
   logo_url: string;
   is_recruiting: boolean;
-  department: string;
+  department: AcademicDepartment;
   lead_enrollment: string;
   lead_name: string;
   contact_email?: string;
@@ -31,15 +40,13 @@ export interface Society {
 }
 
 export type EventCategory = 
-  | 'Tech' 
-  | 'Sports' 
-  | 'Drama' 
-  | 'Free Food' 
-  | 'Workshops' 
-  | 'Music' 
-  | 'Academic';
-
-export type CampusFloor = 'Ground' | '1st' | '2nd' | '3rd' | 'Outdoor';
+  | 'Workshop' 
+  | 'Seminar' 
+  | 'Tech Talk' 
+  | 'Competition' 
+  | 'Sports & Athletics' 
+  | 'Cultural & Arts' 
+  | 'Annual Gala';
 
 export interface CampusEvent {
   id: string;
@@ -47,10 +54,10 @@ export interface CampusEvent {
   description: string;
   category: EventCategory;
   location_name: string;
-  floor: CampusFloor; // Ground, 1st (CS), 2nd (EE), 3rd (Research/Media), Outdoor
-  lab_name?: string;  // e.g. "AI & Data Science Lab", "Sir Syed Auditorium"
-  latitude: number;
-  longitude: number;
+  latitude?: number;
+  longitude?: number;
+  banner_url?: string;
+  target_department?: string;
   start_time: string; // ISO string
   end_time: string;   // ISO string
   society_id: string;
@@ -60,6 +67,13 @@ export interface CampusEvent {
   rejection_reason?: string;
   capacity?: number;
   attendee_count?: number;
+  registered_students?: {
+    enrollment_id: string;
+    full_name: string;
+    department: string;
+    semester: string;
+    registered_at: string;
+  }[];
   is_bookmarked?: boolean;
 }
 
@@ -100,6 +114,7 @@ export interface ChatChannel {
   society_id?: string;
   society_name?: string;
   is_private: boolean;
+  is_announcements_only?: boolean; // When true, only Developer/Admin can send messages
   member_enrollments: string[];
   created_by_enrollment: string;
   avatar_url?: string;

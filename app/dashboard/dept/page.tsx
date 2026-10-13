@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import confetti from 'canvas-confetti';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useApp } from '@/context/AppContext';
@@ -74,15 +75,15 @@ export default function DepartmentHODPage() {
         </div>
         <h2 className="text-2xl font-black text-white">Department Head Clearance Access</h2>
         <p className="text-slate-400 text-xs max-w-md mx-auto">
-          The HOD Queue is restricted to Department Chairpersons for auditorium bookings and conflict
-          mitigation. Switch your active role to HOD to review requests:
+          The HOD Queue is restricted to Department Chairpersons for auditorium bookings and venue approvals.
+          Elevated department access is granted exclusively by the Platform Administrator.
         </p>
-        <button
-          onClick={() => switchRole('hod')}
-          className="px-6 py-2.5 rounded-xl bg-gold-500 hover:bg-gold-400 text-navy-950 font-black text-xs uppercase tracking-wider shadow-gold transition-all"
+        <Link
+          href="/"
+          className="inline-block px-6 py-2.5 rounded-xl bg-gold-500 hover:bg-gold-400 text-navy-950 font-black text-xs uppercase tracking-wider shadow-gold transition-all"
         >
-          <span>🏛️ Switch to HOD Mode</span>
-        </button>
+          <span>Return to Campus Feed</span>
+        </Link>
       </div>
     );
   }

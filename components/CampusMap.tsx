@@ -156,7 +156,7 @@ export const CampusMap: React.FC<CampusMapProps> = ({
               font-size: 13px;
               cursor: pointer;
             ">
-              ${event.category === 'Free Food' ? '🍕' : event.category === 'Sports' ? '⚽' : event.category === 'Drama' ? '🎭' : '🏛️'}
+              ${event.category === 'Sports & Athletics' ? '⚽' : event.category === 'Competition' ? '🏆' : event.category === 'Tech Talk' ? '💻' : '🏛️'}
             </div>
             ${
               isHappeningNow
@@ -174,7 +174,7 @@ export const CampusMap: React.FC<CampusMapProps> = ({
           popupAnchor: [0, -22],
         });
 
-        const marker = L.marker([event.latitude, event.longitude], { icon: customIcon }).addTo(map);
+        const marker = L.marker([event.latitude || defaultCenter.lat, event.longitude || defaultCenter.lng], { icon: customIcon }).addTo(map);
 
         const popupContent = document.createElement('div');
         popupContent.className = 'collegiate-popup';
@@ -185,7 +185,7 @@ export const CampusMap: React.FC<CampusMapProps> = ({
           <div style="margin-bottom: 8px;">
             <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px;">
               <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 6px; background: rgba(212, 175, 55, 0.15); color: #d4af37; border: 1px solid rgba(212, 175, 55, 0.3);">
-                ${event.category} • Floor: ${event.floor || 'Ground'}
+                ${event.category} • ${event.location_name}
               </span>
               ${
                 isHappeningNow

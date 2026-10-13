@@ -19,7 +19,7 @@ export interface UseUserRoleReturn {
  * Supports active role switching for real-time mode previewing across the 4 modes.
  */
 export function useUserRole(): UseUserRoleReturn {
-  const { currentUser, activeRole, switchRole, loading } = useApp();
+  const { currentUser, activeRole, loading } = useApp();
 
   return {
     user: currentUser,
@@ -28,7 +28,7 @@ export function useUserRole(): UseUserRoleReturn {
     isHod: activeRole === 'hod',
     isSocietyAdmin: activeRole === 'society_admin',
     isStudent: activeRole === 'student',
-    switchRole,
+    switchRole: () => {},
     loading,
   };
 }

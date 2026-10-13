@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
-import { UserRole } from '@/types';
+import { AcademicDepartment } from '@/types';
+import { ACADEMIC_DEPARTMENTS, SEMESTERS } from '@/utils/mockData';
 import {
   Lock,
   User,
@@ -23,14 +24,15 @@ export default function LoginPage() {
 
   // Sign In Form State
   const [loginEnrollment, setLoginEnrollment] = useState('');
-  const [loginPassword, setLoginPassword] = useState('bahria2026');
+  const [loginPassword, setLoginPassword] = useState('');
 
-  // Register Form State
+  // Register Form State (Strictly Student)
   const [regEnrollment, setRegEnrollment] = useState('');
   const [regFullName, setRegFullName] = useState('');
   const [regEmail, setRegEmail] = useState('');
-  const [regDepartment, setRegDepartment] = useState('Computer Science & Software Engineering');
-  const [regRole, setRegRole] = useState<UserRole>('student');
+  const [regDepartment, setRegDepartment] = useState<AcademicDepartment>('Software Engineering');
+  const [regSemester, setRegSemester] = useState('1st Semester');
+  const [regPassword, setRegPassword] = useState('');
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -58,11 +60,12 @@ export default function LoginPage() {
     setIsLoading(true);
 
     const res = await register({
-      enrollment_id: regEnrollment,
-      full_name: regFullName,
-      email: regEmail,
+      enrollment_id: regEnrollment.trim(),
+      full_name: regFullName.trim(),
+      email: regEmail.trim(),
       department: regDepartment,
-      role: regRole,
+      semester: regSemester,
+      password: regPassword,
     });
     setIsLoading(false);
 
@@ -72,13 +75,6 @@ export default function LoginPage() {
     } else {
       setErrorMsg(res.message || 'Registration failed');
     }
-  };
-
-  const quickSignIn = async (enrollmentId: string) => {
-    setErrorMsg(null);
-    await login(enrollmentId);
-    setSuccessMsg('Signed in. Redirecting...');
-    setTimeout(() => router.push('/'), 500);
   };
 
   return (
@@ -104,10 +100,10 @@ export default function LoginPage() {
             <span className="text-2xl font-serif font-black text-gold-400">BU</span>
           </div>
           <h2 className="mt-4 text-3xl font-black text-white tracking-tight">
-            CampPulse Portal
+            BU H-11 Portal
           </h2>
           <p className="mt-1 text-xs text-slate-400">
-            Bahria University Verified Collegiate Network
+            Plot 83, Sector H-11/4 • Verified Collegiate Network
           </p>
         </div>
 
@@ -139,7 +135,7 @@ export default function LoginPage() {
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                Register
+                Register Student
               </button>
             </div>
 
@@ -171,7 +167,7 @@ export default function LoginPage() {
                       placeholder="e.g. 01-134221-042"
                       value={loginEnrollment}
                       onChange={(e) => setLoginEnrollment(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-navy-950 border border-navy-700 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-gold-500"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-navy-950 border border-navy-700 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-gold-500 font-mono"
                     />
                   </div>
                 </div>
@@ -201,42 +197,6 @@ export default function LoginPage() {
                   <span>{isLoading ? 'Authenticating...' : 'Sign In with Enrollment ID'}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
-
-                <div className="pt-4 border-t border-navy-800">
-                  <p className="text-[11px] font-semibold text-slate-400 mb-2 text-center">
-                    Quick Sign-In As Verified Campus Roles:
-                  </p>
-                  <div className="grid grid-cols-2 gap-2 text-[11px]">
-                    <button
-                      type="button"
-                      onClick={() => quickSignIn('01-134221-042')}
-                      className="p-2 rounded-lg bg-navy-950 border border-navy-700 hover:border-gold-500/50 text-slate-300 hover:text-gold-300 text-left transition-colors"
-                    >
-                      🎓 Student (CS)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => quickSignIn('01-134201-015')}
-                      className="p-2 rounded-lg bg-navy-950 border border-navy-700 hover:border-gold-500/50 text-slate-300 hover:text-gold-300 text-left transition-colors"
-                    >
-                      🎪 Society Head (ACM)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => quickSignIn('00-HOD-CS-001')}
-                      className="p-2 rounded-lg bg-navy-950 border border-navy-700 hover:border-gold-500/50 text-slate-300 hover:text-gold-300 text-left transition-colors"
-                    >
-                      🏛️ Dept HOD (CS)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => quickSignIn('00-SYS-DEV-000')}
-                      className="p-2 rounded-lg bg-navy-950 border border-navy-700 hover:border-gold-500/50 text-slate-300 hover:text-gold-300 text-left transition-colors"
-                    >
-                      ⚡ System Admin
-                    </button>
-                  </div>
-                </div>
               </form>
             ) : (
               <form onSubmit={handleRegister} className="space-y-3.5">
@@ -251,7 +211,7 @@ export default function LoginPage() {
                       placeholder="01-134221-099"
                       value={regEnrollment}
                       onChange={(e) => setRegEnrollment(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-navy-950 border border-navy-700 text-xs text-slate-100"
+                      className="w-full px-3 py-2 rounded-xl bg-navy-950 border border-navy-700 text-xs text-slate-100 font-mono"
                     />
                   </div>
                   <div>
@@ -261,7 +221,7 @@ export default function LoginPage() {
                     <input
                       type="text"
                       required
-                      placeholder="Fatima Ali"
+                      placeholder="Muhammad Bilal"
                       value={regFullName}
                       onChange={(e) => setRegFullName(e.target.value)}
                       className="w-full px-3 py-2 rounded-xl bg-navy-950 border border-navy-700 text-xs text-slate-100"
@@ -283,51 +243,61 @@ export default function LoginPage() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-                    Department *
-                  </label>
-                  <select
-                    value={regDepartment}
-                    onChange={(e) => setRegDepartment(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-navy-950 border border-navy-700 text-xs text-slate-100"
-                  >
-                    <option value="Computer Science & Software Engineering">
-                      Computer Science & Software Engineering
-                    </option>
-                    <option value="Electrical & Computer Engineering">
-                      Electrical & Computer Engineering
-                    </option>
-                    <option value="Management & Business Studies">
-                      Management & Business Studies
-                    </option>
-                    <option value="Media & Communication Studies">
-                      Media & Communication Studies
-                    </option>
-                  </select>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                      Department *
+                    </label>
+                    <select
+                      value={regDepartment}
+                      onChange={(e) => setRegDepartment(e.target.value as AcademicDepartment)}
+                      className="w-full px-2.5 py-2 rounded-xl bg-navy-950 border border-navy-700 text-xs text-slate-100 cursor-pointer"
+                    >
+                      {ACADEMIC_DEPARTMENTS.map((dept) => (
+                        <option key={dept} value={dept}>
+                          {dept}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                      Semester *
+                    </label>
+                    <select
+                      value={regSemester}
+                      onChange={(e) => setRegSemester(e.target.value)}
+                      className="w-full px-2.5 py-2 rounded-xl bg-navy-950 border border-navy-700 text-xs text-slate-100 cursor-pointer"
+                    >
+                      {SEMESTERS.map((sem) => (
+                        <option key={sem} value={sem}>
+                          {sem}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-                    Role
+                    Password *
                   </label>
-                  <select
-                    value={regRole}
-                    onChange={(e) => setRegRole(e.target.value as UserRole)}
+                  <input
+                    type="password"
+                    required
+                    placeholder="••••••••"
+                    value={regPassword}
+                    onChange={(e) => setRegPassword(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl bg-navy-950 border border-navy-700 text-xs text-slate-100"
-                  >
-                    <option value="student">🎓 Student</option>
-                    <option value="society_admin">🎪 Society Executive</option>
-                    <option value="hod">🏛️ Department Head (HOD)</option>
-                  </select>
+                  />
                 </div>
 
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-gold-600 to-gold-500 text-navy-950 font-black text-xs uppercase tracking-wider shadow-gold"
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-gold-600 to-gold-500 hover:from-gold-500 hover:to-gold-400 text-navy-950 font-black text-xs uppercase tracking-wider shadow-gold transition-all"
                 >
-                  <span>{isLoading ? 'Processing...' : 'Register Verified Account'}</span>
+                  <span>{isLoading ? 'Registering...' : 'Register Student Account'}</span>
                 </button>
               </form>
             )}

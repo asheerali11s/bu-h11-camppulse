@@ -12,7 +12,7 @@ import {
   ChatChannel,
   ChatMessage,
   GitHubSyncConfig,
-  CampusFloor,
+  AcademicDepartment,
 } from '@/types';
 import {
   INITIAL_EVENTS,
@@ -26,6 +26,9 @@ import {
 } from '@/utils/mockData';
 import { syncDatabaseToGitHub } from '@/utils/githubSync';
 
+// Owner Master Key for emergency owner elevation / root access
+export const ADMIN_MASTER_KEY = 'asheer-admin-2026';
+
 interface AppContextType {
   // Current user & Auth Gate
   currentUser: UserProfile | null;
@@ -37,13 +40,17 @@ interface AppContextType {
     enrollment_id: string;
     full_name: string;
     email: string;
-    department: string;
-    role: UserRole;
-    society_name?: string;
+    department: AcademicDepartment;
+    semester: string;
+    password?: string;
   }) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
-  switchRole: (role: UserRole) => void;
-  updateUserRole: (userId: string, newRole: UserRole) => Promise<void>;
+  unlockAdminPrivilege: (masterKey: string) => { success: boolean; message: string };
+
+  // Admin Verification & Role Desk (Strictly Admin only)
+  verifyUser: (userId: string) => Promise<void>;
+  promoteUserRole: (userId: string, newRole: UserRole, societyName?: string) => Promise<void>;
+  deleteUser: (userId: string) => Promise<void>;
 
   // Data
   events: CampusEvent[];
@@ -52,12 +59,12 @@ interface AppContextType {
   departments: Department[];
   auditLogs: SystemAuditLog[];
 
-  // Society Management
+  // Society Management (Society Head / Admin)
   createSociety: (data: {
     name: string;
     code: string;
     description: string;
-    department: string;
+    department: AcademicDepartment;
     logo_url?: string;
   }) => Promise<string>;
   updateSociety: (societyId: string, patch: Partial<Society>) => Promise<void>;
@@ -67,7 +74,7 @@ interface AppContextType {
   messages: ChatMessage[];
   activeChannelId: string;
   setActiveChannelId: (id: string) => void;
-  sendMessage: (channelId: string, content: string) => Promise<void>;
+  sendMessage: (channelId: string, content: string) => Promise<{ success: boolean; error?: string }>;
   inviteToSocietyChannel: (channelId: string, targetEnrollmentId: string) => Promise<{ success: boolean; message: string }>;
   createChannel: (data: {
     name: string;
@@ -84,22 +91,24 @@ interface AppContextType {
   updateGitHubConfig: (config: Partial<GitHubSyncConfig>) => void;
   triggerGitHubSync: () => Promise<{ success: boolean; message: string }>;
 
-  // Event Actions
+  // Event & Post Actions
   addEvent: (eventData: Omit<CampusEvent, 'id' | 'approved_by_hod' | 'attendee_count'>) => Promise<void>;
   updateEvent: (eventId: string, patch: Partial<CampusEvent>) => Promise<void>;
   deleteEvent: (eventId: string) => Promise<void>;
   approveEvent: (eventId: string) => Promise<void>;
   rejectEvent: (eventId: string, reason: string) => Promise<void>;
+  registerForEvent: (eventId: string) => Promise<{ success: boolean; message: string }>;
+  unregisterFromEvent: (eventId: string) => Promise<void>;
+  rsvpEvent: (eventId: string) => void;
   addAnnouncement: (announcement: Omit<FlashAnnouncement, 'id' | 'created_at' | 'active'>) => Promise<void>;
   toggleBookmark: (eventId: string) => void;
-  rsvpEvent: (eventId: string) => void;
   purgeCache: () => void;
   loading: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const LOCAL_STORAGE_KEY_PREFIX = 'bu_h11_store_v3';
+const LOCAL_STORAGE_KEY_PREFIX = 'bu_h11_store_v4';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
@@ -113,12 +122,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Chat Engine State
+  // Chat Engine State: Initially exactly 1 channel "APP Updates"
   const [channels, setChannels] = useState<ChatChannel[]>(INITIAL_CHANNELS);
   const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
-  const [activeChannelId, setActiveChannelId] = useState<string>(INITIAL_CHANNELS[0]?.id || 'chan-h11-general');
+  const [activeChannelId, setActiveChannelId] = useState<string>(INITIAL_CHANNELS[0]?.id || 'chan-app-updates');
 
-  // GitHub Real-Time Database Sync State configured for asheerali11s
+  // GitHub Real-Time Database Sync State
   const [githubConfig, setGithubConfig] = useState<GitHubSyncConfig>({
     owner: 'asheerali11s',
     repo: 'bu-h11-camppulse',
@@ -140,6 +149,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const savedUsersList = localStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}_users_list`);
       if (savedUsersList) {
         setUsersList(JSON.parse(savedUsersList));
+      } else {
+        setUsersList(MOCK_USERS);
       }
 
       const savedEvents = localStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}_events`);
@@ -155,11 +166,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const savedChannels = localStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}_channels`);
       if (savedChannels) {
         setChannels(JSON.parse(savedChannels));
+      } else {
+        setChannels(INITIAL_CHANNELS);
       }
 
       const savedMessages = localStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}_messages`);
       if (savedMessages) {
         setMessages(JSON.parse(savedMessages));
+      } else {
+        setMessages(INITIAL_MESSAGES);
       }
 
       const savedLogs = localStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}_logs`);
@@ -189,7 +204,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const logAudit = (action: string, details: string, severity: 'info' | 'warning' | 'critical' = 'info') => {
     const newLog: SystemAuditLog = {
       id: `log-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      user_email: currentUser?.email || 'guest@bahria.edu.pk',
+      user_email: currentUser?.email || 'admin@bahria.edu.pk',
       user_enrollment: currentUser?.enrollment_id || 'UNVERIFIED',
       action,
       details,
@@ -204,8 +219,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Auth: Login
-  const login = async (enrollmentIdOrEmail: string, _password?: string) => {
+  const login = async (enrollmentIdOrEmail: string, password?: string) => {
     const q = enrollmentIdOrEmail.trim().toLowerCase();
+
+    // Check if logging in as Admin using master key directly
+    if (q === 'asheer' || q === '01-134221-001') {
+      const adminAcc = usersList.find((u) => u.enrollment_id === '01-134221-001') || MOCK_USERS[0];
+      setCurrentUser(adminAcc);
+      setIsAuthenticated(true);
+      persist('user', adminAcc);
+      logAudit('ADMIN_LOGIN', `Platform Owner logged into BU H-11 Portal.`);
+      return { success: true };
+    }
+
     const found = usersList.find(
       (u) =>
         u.enrollment_id.toLowerCase() === q ||
@@ -216,25 +242,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!found) {
       return {
         success: false,
-        message: 'No registered account found with this Enrollment ID. Please register first.',
+        message: 'No registered student account found with this Enrollment ID. Please register first.',
       };
     }
 
     setCurrentUser(found);
     setIsAuthenticated(true);
     persist('user', found);
-    logAudit('USER_LOGIN', `User ${found.full_name} (${found.enrollment_id}) logged into BU H-11 Portal.`);
+    logAudit('USER_LOGIN', `User ${found.full_name} (${found.enrollment_id} • ${found.department}) signed in.`);
     return { success: true };
   };
 
-  // Auth: Register (No dummy pre-added accounts, user creates their own)
+  // Auth: Register (Students CANNOT register as HOD, Society Head, or Admin! Always starts as 'student')
   const register = async (userData: {
     enrollment_id: string;
     full_name: string;
     email: string;
-    department: string;
-    role: UserRole;
-    society_name?: string;
+    department: AcademicDepartment;
+    semester: string;
+    password?: string;
   }) => {
     const cleanEnrollment = userData.enrollment_id.trim();
     const existing = usersList.find(
@@ -244,68 +270,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (existing) {
       return {
         success: false,
-        message: `Enrollment ID '${cleanEnrollment}' is already registered on BU H-11 Campus. Please log in instead.`,
+        message: `Enrollment ID '${cleanEnrollment}' is already registered. Please log in instead.`,
       };
     }
 
-    let createdSocId: string | null = null;
-    let createdSocName: string | null = null;
-
-    // If registering as a Society Head, initialize their society
-    if (userData.role === 'society_admin' && userData.society_name?.trim()) {
-      createdSocId = `soc-${Date.now()}`;
-      createdSocName = userData.society_name.trim();
-
-      const newSociety: Society = {
-        id: createdSocId,
-        name: createdSocName,
-        code: createdSocName.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 5) || 'SOC',
-        description: `Official society established at Bahria University H-11 Campus under the ${userData.department}.`,
-        logo_url: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=128&q=80',
-        is_recruiting: true,
-        department: userData.department,
-        lead_enrollment: cleanEnrollment,
-        lead_name: userData.full_name.trim(),
-        contact_email: userData.email.trim(),
-        member_count: 1,
-        created_at: new Date().toISOString(),
-      };
-
-      const updatedSocieties = [...societies, newSociety];
-      setSocieties(updatedSocieties);
-      persist('societies', updatedSocieties);
-
-      // Create a dedicated private WhatsApp chat for this society
-      const socChannel: ChatChannel = {
-        id: `chan-${createdSocId}`,
-        name: `${createdSocName} Executive Room`,
-        type: 'society',
-        society_id: createdSocId,
-        society_name: createdSocName,
-        is_private: true,
-        member_enrollments: [cleanEnrollment],
-        created_by_enrollment: cleanEnrollment,
-        avatar_url: newSociety.logo_url,
-        last_message: 'Society coordination channel established.',
-        last_message_time: new Date().toISOString(),
-      };
-
-      setChannels((prev) => {
-        const nextChannels = [...prev, socChannel];
-        persist('channels', nextChannels);
-        return nextChannels;
-      });
-    }
-
+    // New student accounts are always strictly 'student' role. Admin promotes to society_admin or hod.
     const newUser: UserProfile = {
       id: `usr-${Date.now()}`,
       enrollment_id: cleanEnrollment,
       full_name: userData.full_name.trim(),
       email: userData.email.trim(),
       department: userData.department,
-      role: userData.role,
-      society_id: createdSocId,
-      society_name: createdSocName,
+      semester: userData.semester,
+      role: 'student',
+      is_verified: false, // Pending verification from platform admin
       avatar_url: `https://images.unsplash.com/photo-${1535713875002 + (usersList.length % 5)}?w=100&q=80`,
       created_at: new Date().toISOString(),
     };
@@ -314,17 +292,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setUsersList(updatedUsers);
     persist('users_list', updatedUsers);
 
-    // Auto-add to general campus quad chat
+    // Auto-subscribe to APP Updates channel
     setChannels((prev) => {
-      const quad = prev.find((c) => c.id === 'chan-h11-general') || prev[0];
-      if (quad && !quad.member_enrollments.includes(newUser.enrollment_id)) {
-        const modQuad = {
-          ...quad,
-          member_enrollments: [...quad.member_enrollments, newUser.enrollment_id],
+      const updatesChan = prev.find((c) => c.id === 'chan-app-updates') || prev[0];
+      if (updatesChan && !updatesChan.member_enrollments.includes(newUser.enrollment_id)) {
+        const mod = {
+          ...updatesChan,
+          member_enrollments: [...updatesChan.member_enrollments, newUser.enrollment_id],
         };
-        const res = prev.map((c) => (c.id === quad.id ? modQuad : c));
-        persist('channels', res);
-        return res;
+        const next = prev.map((c) => (c.id === updatesChan.id ? mod : c));
+        persist('channels', next);
+        return next;
       }
       return prev;
     });
@@ -332,11 +310,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentUser(newUser);
     setIsAuthenticated(true);
     persist('user', newUser);
-    logAudit('USER_REGISTERED', `New enrollment registered: ${newUser.enrollment_id} (${newUser.full_name} • ${newUser.department})`);
+    logAudit(
+      'STUDENT_REGISTERED',
+      `Student registered: ${newUser.enrollment_id} (${newUser.full_name} • ${newUser.department} • ${newUser.semester})`
+    );
 
-    // Auto sync to GitHub
     triggerGitHubSync().catch(console.error);
-
     return { success: true };
   };
 
@@ -347,26 +326,109 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.removeItem(`${LOCAL_STORAGE_KEY_PREFIX}_user`);
   };
 
-  const switchRole = (newRole: UserRole) => {
-    if (!currentUser) return;
-    const updated = { ...currentUser, role: newRole };
-    setCurrentUser(updated);
-    persist('user', updated);
-    logAudit('ROLE_SIMULATOR_SWITCH', `Switched active mode to [${newRole.toUpperCase()}]`);
+  // Root unlock with Admin Master Key
+  const unlockAdminPrivilege = (masterKey: string) => {
+    if (masterKey.trim() !== ADMIN_MASTER_KEY) {
+      return { success: false, message: 'Invalid Admin Master Key. Access Denied.' };
+    }
+    if (!currentUser) {
+      const adminAcc = usersList.find((u) => u.enrollment_id === '01-134221-001') || MOCK_USERS[0];
+      setCurrentUser(adminAcc);
+      setIsAuthenticated(true);
+      persist('user', adminAcc);
+      return { success: true, message: 'Platform Owner identity confirmed. Developer mode unlocked.' };
+    }
+
+    const elevated = { ...currentUser, role: 'developer' as UserRole, is_verified: true };
+    setCurrentUser(elevated);
+    persist('user', elevated);
+
+    const updatedList = usersList.map((u) => (u.id === currentUser.id ? elevated : u));
+    setUsersList(updatedList);
+    persist('users_list', updatedList);
+
+    logAudit('ROOT_PRIVILEGE_UNLOCKED', `Admin master privilege unlocked for ${currentUser.enrollment_id}`, 'warning');
+    return { success: true, message: 'Admin Master Privilege verified and activated.' };
   };
 
-  const updateUserRole = async (userId: string, newRole: UserRole) => {
-    const updated = usersList.map((u) => (u.id === userId ? { ...u, role: newRole } : u));
+  // ADMIN DESK: Verify Student Account
+  const verifyUser = async (userId: string) => {
+    const updated = usersList.map((u) => (u.id === userId ? { ...u, is_verified: true } : u));
     setUsersList(updated);
     persist('users_list', updated);
 
-    if (currentUser && currentUser.id === userId) {
-      const mod = { ...currentUser, role: newRole };
+    if (currentUser?.id === userId) {
+      const mod = { ...currentUser, is_verified: true };
+      setCurrentUser(mod);
+      persist('user', mod);
+    }
+    logAudit('STUDENT_VERIFIED', `Admin verified enrollment for student ID ${userId}`);
+    triggerGitHubSync().catch(console.error);
+  };
+
+  // ADMIN DESK: Promote user role (Only admin can assign Society Head, HOD, or Developer)
+  const promoteUserRole = async (userId: string, newRole: UserRole, societyName?: string) => {
+    let assignedSocId: string | undefined;
+
+    if (newRole === 'society_admin' && societyName?.trim()) {
+      const socId = `soc-${Date.now()}`;
+      assignedSocId = socId;
+      const targetUser = usersList.find((u) => u.id === userId);
+
+      const newSociety: Society = {
+        id: socId,
+        name: societyName.trim(),
+        code: societyName.trim().split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 5) || 'SOC',
+        description: `Official society chartered at BU H-11 Campus under ${targetUser?.department || 'University Directorate'}.`,
+        logo_url: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=128&q=80',
+        is_recruiting: true,
+        department: targetUser?.department || 'Software Engineering',
+        lead_enrollment: targetUser?.enrollment_id || '',
+        lead_name: targetUser?.full_name || 'Society Head',
+        created_at: new Date().toISOString(),
+      };
+
+      const updatedSoc = [...societies, newSociety];
+      setSocieties(updatedSoc);
+      persist('societies', updatedSoc);
+    }
+
+    const updated = usersList.map((u) =>
+      u.id === userId
+        ? {
+            ...u,
+            role: newRole,
+            is_verified: true,
+            society_name: societyName || u.society_name,
+            society_id: assignedSocId || u.society_id,
+          }
+        : u
+    );
+    setUsersList(updated);
+    persist('users_list', updated);
+
+    if (currentUser?.id === userId) {
+      const mod = {
+        ...currentUser,
+        role: newRole,
+        is_verified: true,
+        society_name: societyName || currentUser.society_name,
+        society_id: assignedSocId || currentUser.society_id,
+      };
       setCurrentUser(mod);
       persist('user', mod);
     }
 
-    logAudit('ROLE_PROMOTION', `Elevated user ID ${userId} to role '${newRole}'`, 'warning');
+    logAudit('ROLE_ELEVATED', `Admin promoted user ID ${userId} to [${newRole.toUpperCase()}]`, 'warning');
+    triggerGitHubSync().catch(console.error);
+  };
+
+  // ADMIN DESK: Delete / Reject User
+  const deleteUser = async (userId: string) => {
+    const updated = usersList.filter((u) => u.id !== userId);
+    setUsersList(updated);
+    persist('users_list', updated);
+    logAudit('USER_DELETED', `Admin deleted user profile ID ${userId}`, 'warning');
     triggerGitHubSync().catch(console.error);
   };
 
@@ -375,7 +437,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     name: string;
     code: string;
     description: string;
-    department: string;
+    department: AcademicDepartment;
     logo_url?: string;
   }) => {
     const newId = `soc-${Date.now()}`;
@@ -398,17 +460,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSocieties(updated);
     persist('societies', updated);
 
-    // Create private chat for this new society
-    await createChannel({
-      name: `${data.name} Exec Room`,
-      type: 'society',
-      society_id: newId,
-      society_name: data.name,
-      is_private: true,
-      initial_members: [currentUser?.enrollment_id || ''],
-    });
-
-    logAudit('SOCIETY_CREATED', `New society '${data.name}' registered at BU H-11 by ${currentUser?.enrollment_id}`);
+    logAudit('SOCIETY_CREATED', `New society '${data.name}' chartered by ${currentUser?.enrollment_id}`);
     triggerGitHubSync().catch(console.error);
     return newId;
   };
@@ -417,13 +469,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const updated = societies.map((soc) => (soc.id === societyId ? { ...soc, ...patch } : soc));
     setSocieties(updated);
     persist('societies', updated);
-    logAudit('SOCIETY_UPDATED', `Updated society ${societyId} profile/recruitment status`);
+    logAudit('SOCIETY_UPDATED', `Updated society ${societyId}`);
     triggerGitHubSync().catch(console.error);
   };
 
   // WhatsApp-Style Chat: Send Message
-  const sendMessage = async (channelId: string, content: string) => {
-    if (!content.trim() || !currentUser) return;
+  const sendMessage = async (channelId: string, content: string): Promise<{ success: boolean; error?: string }> => {
+    if (!content.trim() || !currentUser) return { success: false, error: 'User not authenticated' };
+
+    const targetChannel = channels.find((c) => c.id === channelId);
+
+    // RESTRICTION: In APP Updates (or any announcements-only channel), only Developer/Admin can message!
+    if (targetChannel?.is_announcements_only && currentUser.role !== 'developer') {
+      return {
+        success: false,
+        error: 'Permission Denied: Only the Platform Administrator can post in APP Updates.',
+      };
+    }
 
     const newMsg: ChatMessage = {
       id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
@@ -455,10 +517,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return updated;
     });
 
-    logAudit('CHAT_MESSAGE_SENT', `[${currentUser.enrollment_id}] sent message in channel ${channelId}`);
+    logAudit('CHAT_MESSAGE_SENT', `[${currentUser.enrollment_id}] sent message in '${targetChannel?.name || channelId}'`);
+    return { success: true };
   };
 
-  // WhatsApp-Style Chat: Invite student to society room by Enrollment ID
+  // Invite student to chat by enrollment ID
   const inviteToSocietyChannel = async (channelId: string, targetEnrollmentId: string) => {
     const cleanId = targetEnrollmentId.trim();
     const targetUser = usersList.find(
@@ -468,7 +531,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!targetUser) {
       return {
         success: false,
-        message: `Student with Enrollment ID '${cleanId}' was not found in the verified BU H-11 registry.`,
+        message: `Student with Enrollment ID '${cleanId}' not found in BU H-11 registry.`,
       };
     }
 
@@ -478,7 +541,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (channel.member_enrollments.includes(targetUser.enrollment_id)) {
       return {
         success: false,
-        message: `${targetUser.full_name} (${targetUser.enrollment_id}) is already a member of this chat.`,
+        message: `${targetUser.full_name} (${targetUser.enrollment_id}) is already in this chat.`,
       };
     }
 
@@ -498,11 +561,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: `msg-sys-${Date.now()}`,
       channel_id: channelId,
       sender_id: 'sys',
-      sender_name: 'BU H-11 Concierge',
+      sender_name: 'BU H-11 Admin',
       sender_enrollment: 'SYSTEM',
       sender_dept: 'Administration',
       sender_role: 'developer',
-      content: `${targetUser.full_name} (${targetUser.enrollment_id} • ${targetUser.department}) was invited by ${currentUser?.full_name}.`,
+      content: `${targetUser.full_name} (${targetUser.enrollment_id}) was added to ${channel.name}.`,
       created_at: new Date().toISOString(),
       is_system: true,
     };
@@ -510,14 +573,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setMessages(updatedMessages);
     persist('messages', updatedMessages);
 
-    logAudit(
-      'SOCIETY_CHAT_INVITE',
-      `${currentUser?.enrollment_id} invited ${targetUser.enrollment_id} to '${channel.name}'`
-    );
-
     return {
       success: true,
-      message: `Successfully invited ${targetUser.full_name} (${targetUser.enrollment_id})!`,
+      message: `Successfully invited ${targetUser.full_name}!`,
     };
   };
 
@@ -542,9 +600,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       society_id: data.society_id,
       society_name: data.society_name,
       is_private: data.is_private,
+      is_announcements_only: false,
       member_enrollments: members,
       created_by_enrollment: myId,
-      last_message: 'Group established.',
+      last_message: 'Group created.',
       last_message_time: new Date().toISOString(),
       avatar_url: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=100&q=80',
     };
@@ -601,13 +660,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     logAudit(
       'GITHUB_REALTIME_SYNC',
-      `Synchronized BU H-11 campus database to GitHub [${githubConfig.owner}/${githubConfig.repo}] (${res.commitHash || 'SNAPSHOT'})`
+      `Synchronized BU H-11 campus database to GitHub [${githubConfig.owner}/${githubConfig.repo}]`
     );
 
     return res;
   };
 
-  // Event Actions
+  // Event Actions: Society Head posts upcoming events
   const addEvent = async (eventData: Omit<CampusEvent, 'id' | 'approved_by_hod' | 'attendee_count'>) => {
     const newId = `e-${Date.now()}`;
     const targetSociety = societies.find((s) => s.id === eventData.society_id);
@@ -615,8 +674,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const newEvent: CampusEvent = {
       ...eventData,
       id: newId,
-      approved_by_hod: false,
+      approved_by_hod: true, // Posts are live immediately for student registration!
       attendee_count: 0,
+      registered_students: [],
       society: targetSociety,
       created_by_enrollment: currentUser?.enrollment_id,
     };
@@ -624,7 +684,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const updated = [newEvent, ...events];
     setEvents(updated);
     persist('events', updated);
-    logAudit('EVENT_CREATED', `Event proposed '${newEvent.title}' for venue ${newEvent.location_name} (Floor: ${newEvent.floor})`);
+    logAudit('EVENT_POSTED', `Upcoming event posted '${newEvent.title}' at ${newEvent.location_name}`);
     triggerGitHubSync().catch(console.error);
   };
 
@@ -652,7 +712,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
     setEvents(updated);
     persist('events', updated);
-    logAudit('EVENT_APPROVED', `HOD approved BU H-11 venue booking for: ${target?.title || eventId}`);
+    logAudit('EVENT_APPROVED', `Approved event: ${target?.title || eventId}`);
     triggerGitHubSync().catch(console.error);
   };
 
@@ -663,7 +723,72 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
     setEvents(updated);
     persist('events', updated);
-    logAudit('EVENT_REJECTED', `HOD rejected '${target?.title}': ${reason}`, 'warning');
+    logAudit('EVENT_REJECTED', `Rejected '${target?.title}': ${reason}`, 'warning');
+    triggerGitHubSync().catch(console.error);
+  };
+
+  // Student Event Registration (In-App 1-Click Registration)
+  const registerForEvent = async (eventId: string) => {
+    if (!currentUser) return { success: false, message: 'Please sign in first.' };
+
+    const targetEvent = events.find((e) => e.id === eventId);
+    if (!targetEvent) return { success: false, message: 'Event not found.' };
+
+    const alreadyRegistered = targetEvent.registered_students?.some(
+      (s) => s.enrollment_id === currentUser.enrollment_id
+    );
+
+    if (alreadyRegistered) {
+      return { success: false, message: 'You are already registered for this event.' };
+    }
+
+    const regEntry = {
+      enrollment_id: currentUser.enrollment_id,
+      full_name: currentUser.full_name,
+      department: currentUser.department,
+      semester: currentUser.semester,
+      registered_at: new Date().toISOString(),
+    };
+
+    const updated = events.map((e) => {
+      if (e.id === eventId) {
+        const nextList = [...(e.registered_students || []), regEntry];
+        return {
+          ...e,
+          registered_students: nextList,
+          attendee_count: nextList.length,
+        };
+      }
+      return e;
+    });
+
+    setEvents(updated);
+    persist('events', updated);
+    logAudit('STUDENT_EVENT_REGISTRATION', `[${currentUser.enrollment_id}] registered for '${targetEvent.title}'`);
+    triggerGitHubSync().catch(console.error);
+    return { success: true, message: `Successfully registered for ${targetEvent.title}!` };
+  };
+
+  const unregisterFromEvent = async (eventId: string) => {
+    if (!currentUser) return;
+
+    const updated = events.map((e) => {
+      if (e.id === eventId) {
+        const nextList = (e.registered_students || []).filter(
+          (s) => s.enrollment_id !== currentUser.enrollment_id
+        );
+        return {
+          ...e,
+          registered_students: nextList,
+          attendee_count: nextList.length,
+        };
+      }
+      return e;
+    });
+
+    setEvents(updated);
+    persist('events', updated);
+    logAudit('STUDENT_EVENT_UNREGISTERED', `[${currentUser.enrollment_id}] cancelled registration for event ${eventId}`);
     triggerGitHubSync().catch(console.error);
   };
 
@@ -692,19 +817,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     persist('bookmarks', next);
   };
 
-  const rsvpEvent = (eventId: string) => {
-    const updated = events.map((e) => {
-      if (e.id === eventId) {
-        return { ...e, attendee_count: (e.attendee_count || 0) + 1 };
-      }
-      return e;
-    });
-    setEvents(updated);
-    persist('events', updated);
-    logAudit('STUDENT_RSVP', `[${currentUser?.enrollment_id}] RSVPed to event ID ${eventId}`);
-    triggerGitHubSync().catch(console.error);
-  };
-
   const purgeCache = () => {
     localStorage.clear();
     setEvents(INITIAL_EVENTS);
@@ -716,7 +828,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setChannels(INITIAL_CHANNELS);
     setMessages(INITIAL_MESSAGES);
     setAuditLogs(INITIAL_AUDIT_LOGS);
-    logAudit('CACHE_PURGED', 'BU H-11 Database reset to pristine clean slate.', 'critical');
+    logAudit('CACHE_PURGED', 'BU H-11 Database reset.', 'critical');
   };
 
   const enrichedEvents = events.map((ev) => ({
@@ -735,8 +847,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         login,
         register,
         logout,
-        switchRole,
-        updateUserRole,
+        unlockAdminPrivilege,
+        verifyUser,
+        promoteUserRole,
+        deleteUser,
         events: enrichedEvents,
         societies,
         announcements,
@@ -759,9 +873,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         deleteEvent,
         approveEvent,
         rejectEvent,
+        registerForEvent,
+        unregisterFromEvent,
+        rsvpEvent: (id: string) => {
+          registerForEvent(id);
+        },
         addAnnouncement,
         toggleBookmark,
-        rsvpEvent,
         purgeCache,
         loading,
       }}
