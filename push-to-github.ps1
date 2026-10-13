@@ -9,7 +9,7 @@ Write-Host "Target Account: https://github.com/asheerali11s" -ForegroundColor Wh
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host ""
 
-$rootPath = $PSScriptRoot
+$rootPath = if ($PSScriptRoot) { $PSScriptRoot } else { "C:\Users\ashee\OneDrive\Desktop\BAHRIAEVENTS" }
 $vaultPath = Join-Path $rootPath "database-vault"
 
 # 1. PUSH REPO 1: SERVER APPLICATION (bu-h11-camppulse)
