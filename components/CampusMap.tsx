@@ -156,11 +156,11 @@ export const CampusMap: React.FC<CampusMapProps> = ({
               font-size: 13px;
               cursor: pointer;
             ">
-              ${event.category === 'Sports & Athletics' ? '⚽' : event.category === 'Competition' ? '🏆' : event.category === 'Tech Talk' ? '💻' : '🏛️'}
+              ${event.category === 'Sports & Athletics' ? 'SP' : event.category === 'Competition' ? 'CP' : event.category === 'Tech Talk' ? 'TC' : 'EV'}
             </div>
             ${
               isHappeningNow
-                ? `<div style="position: absolute; top: -2px; right: -2px; width: 10px; height: 10px; background-color: #10b981; border: 2px solid #0a1325; border-radius: 9999px;"></div>`
+                ? `<div style="position: absolute; top: -2px; right: -2px; width: 10px; height: 10px; background-color: #10b981; border: 2px solid #0f2b5c; border-radius: 9999px;"></div>`
                 : ''
             }
           </div>
@@ -184,41 +184,41 @@ export const CampusMap: React.FC<CampusMapProps> = ({
         popupContent.innerHTML = `
           <div style="margin-bottom: 8px;">
             <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px;">
-              <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 6px; background: rgba(212, 175, 55, 0.15); color: #d4af37; border: 1px solid rgba(212, 175, 55, 0.3);">
+              <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 6px; background: #f1f5f9; color: #0f2b5c; border: 1px solid #cbd5e1;">
                 ${event.category} • ${event.location_name}
               </span>
               ${
                 isHappeningNow
-                  ? `<span style="font-size: 10px; font-weight: 700; background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.4);">🔥 LIVE NOW</span>`
+                  ? `<span style="font-size: 10px; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: #059669; padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.3);">LIVE NOW</span>`
                   : ''
               }
             </div>
-            <h4 style="font-size: 15px; font-weight: 800; color: #ffffff; margin: 4px 0 2px 0; line-height: 1.2;">
+            <h4 style="font-size: 15px; font-weight: 800; color: #0f172a; margin: 4px 0 2px 0; line-height: 1.2;">
               ${event.title}
             </h4>
-            <p style="font-size: 12px; color: #cbd5e1; margin: 0 0 6px 0;">
+            <p style="font-size: 12px; color: #475569; margin: 0 0 6px 0;">
               ${event.society?.name || 'Verified Society'}
             </p>
           </div>
           
-          <div style="font-size: 12px; color: #94a3b8; margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px;">
+          <div style="font-size: 12px; color: #475569; margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px;">
             <div style="display: flex; align-items: center; gap: 6px;">
-              <span>📍</span> <strong style="color: #f1f5f9;">${event.location_name}</strong>
+              <strong style="color: #0f172a;">${event.location_name}</strong>
             </div>
             <div style="display: flex; align-items: center; gap: 6px;">
-              <span>⏰</span> <span>${new Date(event.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${new Date(event.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              <span>${new Date(event.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${new Date(event.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             </div>
           </div>
 
           <button id="ics-btn-${event.id}" style="
             width: 100%; 
-            background: linear-gradient(135deg, #d4af37, #b89028); 
-            color: #050b14; 
+            background: #0f2b5c; 
+            color: #ffffff; 
             border: none; 
             padding: 7px 12px; 
             border-radius: 8px; 
             font-size: 11px; 
-            font-weight: 800; 
+            font-weight: 700; 
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -227,7 +227,7 @@ export const CampusMap: React.FC<CampusMapProps> = ({
             text-transform: uppercase;
             letter-spacing: 0.5px;
           ">
-            📅 Export to Calendar (.ics)
+            Export to Calendar (.ics)
           </button>
         `;
 

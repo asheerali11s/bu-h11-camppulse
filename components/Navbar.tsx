@@ -47,26 +47,26 @@ export const Navbar: React.FC = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full backdrop-blur-xl bg-navy-950/95 border-b border-navy-800 text-slate-100 transition-colors">
-        {/* Top Gold Trim Bar */}
-        <div className="h-[2px] w-full bg-gradient-to-r from-navy-800 via-gold-500 to-navy-800" />
+      <header className="sticky top-0 z-50 w-full backdrop-blur-xl bg-white/95 border-b border-slate-200 text-slate-800 transition-colors">
+        {/* Top Trim Bar */}
+        <div className="h-[2px] w-full bg-[#0f2b5c]" />
 
         {/* Top Announcement Ticker */}
         {activeAnnouncements.length > 0 && (
-          <div className="bg-navy-900 border-b border-navy-800 text-xs px-4 py-1.5 flex items-center justify-between overflow-hidden">
-            <div className="flex items-center space-x-2 shrink-0 pr-3 font-semibold text-gold-400">
-              <Volume2 className="w-3.5 h-3.5 text-gold-400 animate-pulse" />
-              <span className="uppercase tracking-wider text-[10px] font-mono bg-gold-500/10 px-1.5 py-0.5 rounded border border-gold-500/30">
-                BU H-11 Notice
+          <div className="bg-slate-100/90 border-b border-slate-200 text-xs px-4 py-1.5 flex items-center justify-between overflow-hidden">
+            <div className="flex items-center space-x-2 shrink-0 pr-3 font-semibold text-[#0f2b5c]">
+              <Volume2 className="w-3.5 h-3.5 text-[#0f2b5c]" />
+              <span className="uppercase tracking-wider text-[10px] font-mono bg-white px-2 py-0.5 rounded border border-slate-300 font-bold text-slate-700">
+                Official Campus Notice
               </span>
             </div>
             <div className="overflow-hidden relative w-full">
-              <div className="whitespace-nowrap animate-marquee flex items-center space-x-8 text-slate-300 text-xs">
+              <div className="whitespace-nowrap animate-marquee flex items-center space-x-8 text-slate-700 text-xs font-medium">
                 {activeAnnouncements.map((ann) => (
                   <span key={ann.id} className="inline-flex items-center space-x-2">
-                    <span className="font-bold text-gold-300">[{ann.society_name}]:</span>
+                    <span className="font-bold text-[#0f2b5c]">[{ann.society_name}]:</span>
                     <span>{ann.message}</span>
-                    <span className="text-slate-600 mx-2">•</span>
+                    <span className="text-slate-400 mx-2">•</span>
                   </span>
                 ))}
               </div>
@@ -80,136 +80,135 @@ export const Navbar: React.FC = () => {
             {/* Logo */}
             <div className="flex items-center space-x-3">
               <Link href="/" className="flex items-center space-x-3 group">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-navy-800 to-navy-900 border border-gold-500/40 flex items-center justify-center shadow-gold group-hover:scale-105 transition-transform">
-                  <span className="font-serif font-black text-gold-400 text-lg">BU</span>
+                <div className="w-9 h-9 rounded-xl bg-[#0f2b5c] text-white flex items-center justify-center font-serif font-black text-base shadow-sm group-hover:bg-[#0a1e42] transition-colors">
+                  BU
                 </div>
                 <div className="flex flex-col">
                   <div className="flex items-center space-x-2">
-                    <span className="font-black text-xl tracking-tight text-white">
-                      Camp<span className="text-gold-400 font-serif">Pulse</span>
+                    <span className="font-bold text-base tracking-tight text-slate-900">
+                      Bahria University
                     </span>
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-gold-500"></span>
+                    <span className="text-[11px] font-medium px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                      H-11
                     </span>
                   </div>
-                  <span className="text-[10px] text-slate-400 font-medium tracking-wide">
-                    Bahria University H-11 Campus
+                  <span className="text-[11px] text-slate-500 font-medium">
+                    Campus Event &amp; Society Hub
                   </span>
                 </div>
               </Link>
             </div>
 
             {/* Desktop Navigation Links */}
-            <nav className="hidden md:flex items-center space-x-1.5">
+            <nav className="hidden md:flex items-center space-x-1">
               <Link
                 href="/"
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 ${
+                className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 ${
                   isActive('/')
-                    ? 'bg-navy-800 text-gold-400 border border-gold-500/30 shadow-sm'
-                    : 'text-slate-300 hover:text-white hover:bg-navy-850'
+                    ? 'bg-slate-100 text-[#0f2b5c] font-bold'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
-                <Compass className="w-4 h-4 text-gold-400" />
-                <span>Events &amp; Posts Feed</span>
+                <Compass className="w-4 h-4 text-slate-500" />
+                <span>Events Feed</span>
               </Link>
 
               {/* Chat Channel */}
               <Link
                 href="/chat"
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 ${
+                className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 ${
                   isActive('/chat')
-                    ? 'bg-navy-800 text-gold-400 border border-gold-500/30 shadow-sm'
-                    : 'text-slate-300 hover:text-white hover:bg-navy-850'
+                    ? 'bg-slate-100 text-[#0f2b5c] font-bold'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
-                <MessageSquare className="w-4 h-4 text-gold-400" />
-                <span>APP Updates &amp; Chat</span>
+                <MessageSquare className="w-4 h-4 text-slate-500" />
+                <span>Notice Board &amp; Chat</span>
               </Link>
 
-              {/* Society Head Post Event Link (Only if user has society_admin role or developer) */}
+              {/* Society Head Post Event Link */}
               {(isSocietyAdmin || isDeveloper) && (
                 <Link
                   href="/dashboard/society"
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 ${
+                  className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 ${
                     isActive('/dashboard/society')
-                      ? 'bg-navy-800 text-gold-400 border border-gold-500/30'
-                      : 'text-slate-300 hover:text-white hover:bg-navy-850'
+                      ? 'bg-slate-100 text-[#0f2b5c] font-bold'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   }`}
                 >
-                  <PlusCircle className="w-4 h-4 text-gold-400" />
+                  <PlusCircle className="w-4 h-4 text-slate-500" />
                   <span>Post Event</span>
                 </Link>
               )}
 
-              {/* HOD Review Link (Only if HOD or Developer) */}
+              {/* HOD Review Link */}
               {(isHod || isDeveloper) && (
                 <Link
                   href="/dashboard/dept"
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 ${
+                  className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 ${
                     isActive('/dashboard/dept')
-                      ? 'bg-navy-800 text-gold-400 border border-gold-500/30'
-                      : 'text-slate-300 hover:text-white hover:bg-navy-850'
+                      ? 'bg-slate-100 text-[#0f2b5c] font-bold'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   }`}
                 >
-                  <Building2 className="w-4 h-4 text-gold-400" />
+                  <Building2 className="w-4 h-4 text-slate-500" />
                   <span>HOD Queue</span>
                 </Link>
               )}
 
-              {/* STRICT RESTRICTION: ONLY DEVELOPER / ADMIN CAN SEE AND ACCESS ADMIN PORTAL */}
+              {/* STRICT RESTRICTION: Platform Owner Admin Portal */}
               {isDeveloper && (
                 <Link
                   href="/dashboard/dev"
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 border ${
+                  className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 ${
                     isActive('/dashboard/dev')
-                      ? 'bg-gold-500 text-navy-950 border-gold-400 font-black shadow-gold'
-                      : 'text-gold-400 bg-navy-900 border-gold-500/40 hover:bg-navy-850'
+                      ? 'bg-[#0f2b5c] text-white shadow-sm font-bold'
+                      : 'bg-slate-100 hover:bg-slate-200 text-[#0f2b5c]'
                   }`}
                 >
-                  <ShieldAlert className="w-4 h-4" />
-                  <span>⚡ Admin Portal</span>
+                  <ShieldAlert className="w-4 h-4 text-[#0f2b5c]" />
+                  <span>Administrative Console</span>
                 </Link>
               )}
             </nav>
 
-            {/* Right Action: GitHub Sync Pill, User Info & Logout */}
-            <div className="hidden md:flex items-center space-x-3">
+            {/* Right Action: Database Status, User Info & Logout */}
+            <div className="hidden md:flex items-center space-x-2.5">
               {/* GitHub Status */}
               <button
                 onClick={() => triggerGitHubSync()}
-                className="px-2.5 py-1.5 rounded-lg bg-navy-900 hover:bg-navy-850 border border-navy-750 hover:border-gold-500/40 text-[11px] font-mono text-slate-300 flex items-center space-x-1.5 transition-colors"
-                title="GitHub Database Sync"
+                className="px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-[11px] font-mono text-slate-600 flex items-center space-x-1.5 transition-colors"
+                title="Database Cloud Sync Status"
               >
-                <GitBranch className="w-3.5 h-3.5 text-gold-400" />
+                <GitBranch className="w-3.5 h-3.5 text-slate-500" />
                 <span>DB: {githubConfig.last_commit_hash || 'synced'}</span>
               </button>
 
               {/* Current User Pill */}
               {currentUser ? (
                 <div className="flex items-center space-x-2">
-                  <div className="flex items-center space-x-2.5 p-1.5 pr-3 rounded-xl bg-navy-900 border border-navy-750 text-left">
+                  <div className="flex items-center space-x-2.5 p-1.5 pr-3 rounded-xl bg-white border border-slate-200 shadow-xs text-left">
                     <img
                       src={currentUser.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=64&q=80'}
                       alt=""
-                      className="w-8 h-8 rounded-full border border-gold-500/40 object-cover"
+                      className="w-7 h-7 rounded-full border border-slate-200 object-cover"
                     />
                     <div className="flex flex-col">
-                      <div className="flex items-center space-x-1.5">
-                        <span className="text-xs font-bold text-slate-200 truncate max-w-[120px]">
+                      <div className="flex items-center space-x-1">
+                        <span className="text-xs font-semibold text-slate-900 truncate max-w-[120px]">
                           {currentUser.full_name?.split(' ')[0] || 'Student'}
                         </span>
                         {currentUser.is_verified ? (
                           <span title="Verified Account">
-                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                           </span>
                         ) : (
-                          <span className="text-[9px] px-1 rounded bg-amber-500/20 text-amber-300 font-mono">
+                          <span className="text-[9px] px-1 rounded bg-amber-50 text-amber-800 border border-amber-200 font-mono">
                             Pending
                           </span>
                         )}
                       </div>
-                      <span className="text-[10px] text-gold-400 font-mono truncate max-w-[120px]">
+                      <span className="text-[10px] text-slate-500 font-mono truncate max-w-[120px]">
                         {currentUser.enrollment_id}
                       </span>
                     </div>
@@ -219,17 +218,17 @@ export const Navbar: React.FC = () => {
                   {!isDeveloper && (
                     <button
                       onClick={() => setAdminUnlockOpen(true)}
-                      className="px-2.5 py-1.5 rounded-xl bg-navy-900 hover:bg-gold-500/20 text-gold-400 border border-gold-500/30 text-[11px] font-bold transition-all flex items-center space-x-1.5 shadow-sm"
+                      className="px-2.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-[11px] font-semibold transition-all flex items-center space-x-1.5 shadow-xs"
                       title="Platform Owner Root Admin Unlock"
                     >
-                      <Key className="w-3.5 h-3.5 text-gold-400" />
-                      <span className="hidden lg:inline">Unlock Admin</span>
+                      <Key className="w-3.5 h-3.5 text-slate-500" />
+                      <span className="hidden lg:inline">Admin Access</span>
                     </button>
                   )}
 
                   <button
                     onClick={() => logout()}
-                    className="p-2 rounded-xl bg-navy-900 hover:bg-rose-950/60 border border-navy-750 hover:border-rose-500/40 text-slate-400 hover:text-rose-300 transition-colors"
+                    className="p-2 rounded-xl bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-200 text-slate-500 hover:text-rose-600 transition-colors shadow-xs"
                     title="Sign Out"
                   >
                     <LogOut className="w-4 h-4" />
@@ -238,7 +237,7 @@ export const Navbar: React.FC = () => {
               ) : (
                 <button
                   onClick={() => setAuthModalOpen(true)}
-                  className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-gold-500 hover:bg-gold-400 text-navy-950 text-xs font-black transition-colors"
+                  className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-[#0f2b5c] hover:bg-[#0a1e42] text-white text-xs font-semibold shadow-sm transition-colors"
                 >
                   <User className="w-3.5 h-3.5" />
                   <span>Sign In</span>
@@ -250,7 +249,7 @@ export const Navbar: React.FC = () => {
             <div className="flex md:hidden items-center space-x-2">
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-navy-850"
+                className="p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100"
               >
                 {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
@@ -260,30 +259,30 @@ export const Navbar: React.FC = () => {
 
         {/* Mobile Drawer */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-navy-800 bg-navy-900 px-4 pt-2 pb-4 space-y-2">
+          <div className="md:hidden border-t border-slate-200 bg-white px-4 pt-2 pb-4 space-y-1">
             <Link
               href="/"
               onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-200 hover:bg-navy-850"
+              className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
-              🧭 Events &amp; Posts Feed
+              Events Feed
             </Link>
 
             <Link
               href="/chat"
               onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 rounded-lg text-sm font-semibold text-gold-300 hover:bg-navy-850"
+              className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
-              💬 APP Updates &amp; Chat
+              Notice Board &amp; Chat
             </Link>
 
             {(isSocietyAdmin || isDeveloper) && (
               <Link
                 href="/dashboard/society"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-200 hover:bg-navy-850"
+                className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
               >
-                🎪 Post Event
+                Post Event
               </Link>
             )}
 
@@ -291,9 +290,9 @@ export const Navbar: React.FC = () => {
               <Link
                 href="/dashboard/dept"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-200 hover:bg-navy-850"
+                className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
               >
-                🏛️ HOD Review Queue
+                HOD Review Queue
               </Link>
             )}
 
@@ -301,9 +300,9 @@ export const Navbar: React.FC = () => {
               <Link
                 href="/dashboard/dev"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-sm font-semibold text-gold-400 hover:bg-navy-850"
+                className="block px-3 py-2 rounded-lg text-sm font-semibold text-[#0f2b5c] bg-slate-50"
               >
-                ⚡ Admin Portal
+                Administrative Console
               </Link>
             )}
 
@@ -313,21 +312,21 @@ export const Navbar: React.FC = () => {
                   setMobileMenuOpen(false);
                   setAdminUnlockOpen(true);
                 }}
-                className="w-full text-left px-3 py-2 rounded-lg text-sm font-semibold text-gold-400 hover:bg-navy-850 flex items-center space-x-2"
+                className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center space-x-2"
               >
-                <Key className="w-4 h-4" />
-                <span>🔑 Platform Owner Admin Unlock</span>
+                <Key className="w-4 h-4 text-slate-500" />
+                <span>Admin Master Key Access</span>
               </button>
             )}
 
-            <div className="pt-3 border-t border-navy-800 flex items-center justify-between">
+            <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
               {currentUser ? (
                 <button
                   onClick={() => {
                     logout();
                     setMobileMenuOpen(false);
                   }}
-                  className="px-3 py-2 rounded-lg bg-rose-950/60 border border-rose-800 text-xs font-bold text-rose-300 w-full text-center"
+                  className="px-3 py-2 rounded-lg bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700 w-full text-center"
                 >
                   Sign Out ({currentUser.enrollment_id})
                 </button>
@@ -337,7 +336,7 @@ export const Navbar: React.FC = () => {
                     setMobileMenuOpen(false);
                     setAuthModalOpen(true);
                   }}
-                  className="px-3 py-2 rounded-lg bg-gold-500 text-navy-950 text-xs font-black w-full text-center"
+                  className="px-3 py-2 rounded-lg bg-[#0f2b5c] text-white text-xs font-semibold w-full text-center"
                 >
                   Sign In / Register
                 </button>
@@ -352,12 +351,12 @@ export const Navbar: React.FC = () => {
 
       {/* Platform Owner Master Key Unlock Modal */}
       {adminUnlockOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/85 backdrop-blur-md">
-          <div className="relative w-full max-w-sm bg-navy-900 border border-gold-500/40 rounded-3xl p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-navy-800">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="relative w-full max-w-sm bg-white border border-slate-200 rounded-2xl p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div className="flex items-center space-x-2">
-                <Key className="w-4 h-4 text-gold-400" />
-                <h3 className="text-base font-bold text-white">Platform Owner Unlock</h3>
+                <Key className="w-4 h-4 text-[#0f2b5c]" />
+                <h3 className="text-sm font-bold text-slate-900">Platform Owner Authentication</h3>
               </div>
               <button
                 onClick={() => {
@@ -365,14 +364,14 @@ export const Navbar: React.FC = () => {
                   setUnlockError(null);
                   setUnlockKey('');
                 }}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-600"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <p className="text-xs text-slate-400">
-              Enter the BU H-11 Platform Owner Master Key to elevate this session ({currentUser?.enrollment_id || 'guest'}) to Root Developer/Admin privileges.
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Enter the BU H-11 Platform Owner Master Key to elevate this active session ({currentUser?.enrollment_id || 'guest'}) to Root Administrator mode.
             </p>
 
             <form
@@ -390,7 +389,7 @@ export const Navbar: React.FC = () => {
               className="space-y-3"
             >
               {unlockError && (
-                <div className="p-2.5 rounded-xl bg-rose-950/60 border border-rose-800 text-xs text-rose-300">
+                <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700">
                   {unlockError}
                 </div>
               )}
@@ -398,16 +397,16 @@ export const Navbar: React.FC = () => {
                 type="password"
                 required
                 autoFocus
-                placeholder="Admin Master Key"
+                placeholder="Enter Admin Master Key"
                 value={unlockKey}
                 onChange={(e) => setUnlockKey(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-navy-950 border border-navy-700 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-gold-500 font-mono text-center"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0f2b5c] font-mono text-center shadow-xs"
               />
               <button
                 type="submit"
-                className="w-full py-2.5 rounded-xl bg-gold-500 hover:bg-gold-400 text-navy-950 font-black text-xs uppercase tracking-wider shadow-gold transition-all"
+                className="w-full py-2.5 rounded-xl bg-[#0f2b5c] hover:bg-[#0a1e42] text-white font-semibold text-xs uppercase tracking-wider transition-all shadow-sm"
               >
-                Elevate to Platform Owner
+                Verify &amp; Unlock Administrator Mode
               </button>
             </form>
           </div>

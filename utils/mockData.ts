@@ -136,7 +136,7 @@ export const INITIAL_MESSAGES: ChatMessage[] = [
     sender_enrollment: '01-134221-001',
     sender_dept: 'Software Engineering',
     sender_role: 'developer',
-    content: '📢 Welcome to the official BU (Bahria University H-11 CAMPUS) Hub! All official event announcements and platform notices will be broadcast through this verified channel.',
+    content: 'Welcome to the official BU (Bahria University H-11 CAMPUS) Hub. All official event announcements and platform notices will be broadcast through this verified channel.',
     created_at: new Date().toISOString(),
   },
 ];

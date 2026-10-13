@@ -78,16 +78,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-navy-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Background Navy & Gold Radial Glows */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-navy-800/40 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 right-10 w-96 h-96 bg-gold-500/10 rounded-full blur-3xl pointer-events-none" />
-
+    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative">
       {/* Back to Home Link */}
       <div className="sm:mx-auto sm:w-full sm:max-w-md mb-6 px-4">
         <Link
           href="/"
-          className="inline-flex items-center space-x-1.5 text-xs text-slate-400 hover:text-gold-400 transition-colors"
+          className="inline-flex items-center space-x-1.5 text-xs text-slate-500 hover:text-slate-900 transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
           <span>Back to Campus Feed</span>
@@ -96,30 +92,30 @@ export default function LoginPage() {
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="text-center">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-navy-800 to-navy-900 border border-gold-500/40 flex items-center justify-center shadow-gold">
-            <span className="text-2xl font-serif font-black text-gold-400">BU</span>
+          <div className="w-14 h-14 mx-auto rounded-xl bg-[#0f2b5c] text-white flex items-center justify-center shadow-sm">
+            <span className="text-xl font-serif font-black">BU</span>
           </div>
-          <h2 className="mt-4 text-3xl font-black text-white tracking-tight">
-            BU H-11 Portal
+          <h2 className="mt-4 text-2xl font-bold text-slate-900 tracking-tight">
+            Bahria University H-11 Portal
           </h2>
-          <p className="mt-1 text-xs text-slate-400">
-            Plot 83, Sector H-11/4 • Verified Collegiate Network
+          <p className="mt-1 text-xs text-slate-500">
+            Sector H-11/4 Islamabad • Campus Event &amp; Society Hub
           </p>
         </div>
 
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
-          <div className="bg-navy-900 border border-gold-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-5">
             {/* Toggle Tabs */}
-            <div className="flex p-1 rounded-xl bg-navy-950 border border-navy-700">
+            <div className="flex p-1 rounded-xl bg-slate-100 border border-slate-200">
               <button
                 onClick={() => {
                   setIsRegister(false);
                   setErrorMsg(null);
                 }}
-                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
                   !isRegister
-                    ? 'bg-navy-800 text-gold-400 border border-gold-500/20'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-white text-[#0f2b5c] shadow-xs font-bold'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 Sign In
@@ -129,10 +125,10 @@ export default function LoginPage() {
                   setIsRegister(true);
                   setErrorMsg(null);
                 }}
-                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
                   isRegister
-                    ? 'bg-navy-800 text-gold-400 border border-gold-500/20'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-white text-[#0f2b5c] shadow-xs font-bold'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 Register Student
@@ -140,15 +136,15 @@ export default function LoginPage() {
             </div>
 
             {errorMsg && (
-              <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-800/80 text-xs text-rose-300 flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-center space-x-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
                 <span>{errorMsg}</span>
               </div>
             )}
 
             {successMsg && (
-              <div className="p-3 rounded-xl bg-emerald-950/60 border border-emerald-800/80 text-xs text-emerald-300 flex items-center space-x-2">
-                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center space-x-2">
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
                 <span>{successMsg}</span>
               </div>
             )}
@@ -156,7 +152,7 @@ export default function LoginPage() {
             {!isRegister ? (
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Enrollment ID *
                   </label>
                   <div className="relative">
@@ -167,13 +163,13 @@ export default function LoginPage() {
                       placeholder="e.g. 01-134221-042"
                       value={loginEnrollment}
                       onChange={(e) => setLoginEnrollment(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-navy-950 border border-navy-700 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-gold-500 font-mono"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0f2b5c] font-mono shadow-xs"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Password *
                   </label>
                   <div className="relative">
@@ -181,10 +177,10 @@ export default function LoginPage() {
                     <input
                       type="password"
                       required
-                      placeholder="••••••••"
+                      placeholder="Enter password"
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-navy-950 border border-navy-700 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-gold-500"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0f2b5c] shadow-xs"
                     />
                   </div>
                 </div>
@@ -192,7 +188,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-gold-600 to-gold-500 hover:from-gold-500 hover:to-gold-400 text-navy-950 font-black text-xs uppercase tracking-wider shadow-gold transition-all flex items-center justify-center space-x-2"
+                  className="w-full py-2.5 rounded-xl bg-[#0f2b5c] hover:bg-[#0a1e42] text-white font-semibold text-xs uppercase tracking-wider shadow-sm transition-all flex items-center justify-center space-x-2"
                 >
                   <span>{isLoading ? 'Authenticating...' : 'Sign In with Enrollment ID'}</span>
                   <ArrowRight className="w-4 h-4" />
@@ -202,7 +198,7 @@ export default function LoginPage() {
               <form onSubmit={handleRegister} className="space-y-3.5">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                       Enrollment ID *
                     </label>
                     <input
@@ -211,11 +207,11 @@ export default function LoginPage() {
                       placeholder="01-134221-099"
                       value={regEnrollment}
                       onChange={(e) => setRegEnrollment(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-navy-950 border border-navy-700 text-xs text-slate-100 font-mono"
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-mono shadow-xs"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                       Full Legal Name *
                     </label>
                     <input
@@ -224,13 +220,13 @@ export default function LoginPage() {
                       placeholder="Muhammad Bilal"
                       value={regFullName}
                       onChange={(e) => setRegFullName(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-navy-950 border border-navy-700 text-xs text-slate-100"
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 shadow-xs"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                     Official Email *
                   </label>
                   <input
@@ -239,19 +235,19 @@ export default function LoginPage() {
                     placeholder="student@bahria.edu.pk"
                     value={regEmail}
                     onChange={(e) => setRegEmail(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-navy-950 border border-navy-700 text-xs text-slate-100"
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 shadow-xs"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                       Department *
                     </label>
                     <select
                       value={regDepartment}
                       onChange={(e) => setRegDepartment(e.target.value as AcademicDepartment)}
-                      className="w-full px-2.5 py-2 rounded-xl bg-navy-950 border border-navy-700 text-xs text-slate-100 cursor-pointer"
+                      className="w-full px-2.5 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 cursor-pointer shadow-xs"
                     >
                       {ACADEMIC_DEPARTMENTS.map((dept) => (
                         <option key={dept} value={dept}>
@@ -261,13 +257,13 @@ export default function LoginPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                       Semester *
                     </label>
                     <select
                       value={regSemester}
                       onChange={(e) => setRegSemester(e.target.value)}
-                      className="w-full px-2.5 py-2 rounded-xl bg-navy-950 border border-navy-700 text-xs text-slate-100 cursor-pointer"
+                      className="w-full px-2.5 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 cursor-pointer shadow-xs"
                     >
                       {SEMESTERS.map((sem) => (
                         <option key={sem} value={sem}>
@@ -279,23 +275,23 @@ export default function LoginPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                     Password *
                   </label>
                   <input
                     type="password"
                     required
-                    placeholder="••••••••"
+                    placeholder="Enter password"
                     value={regPassword}
                     onChange={(e) => setRegPassword(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-navy-950 border border-navy-700 text-xs text-slate-100"
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 shadow-xs"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-gold-600 to-gold-500 hover:from-gold-500 hover:to-gold-400 text-navy-950 font-black text-xs uppercase tracking-wider shadow-gold transition-all"
+                  className="w-full py-2.5 rounded-xl bg-[#0f2b5c] hover:bg-[#0a1e42] text-white font-semibold text-xs uppercase tracking-wider shadow-sm transition-all"
                 >
                   <span>{isLoading ? 'Registering...' : 'Register Student Account'}</span>
                 </button>
